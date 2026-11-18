@@ -3,14 +3,14 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-18
-**Current focus:** M1.2 — Config and API base
-**Overall status:** Documentation baseline complete; M1.1 done; implementation started.
+**Current focus:** M1.3 — Database plumbing
+**Overall status:** Documentation baseline complete; M1.1–M1.2 done; implementation started.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1 done; M1.2–M1.11 pending |
+| M1 | Foundation | In progress | M1.1–M1.2 done; M1.3–M1.11 pending |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -29,7 +29,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 
 ### M1 — Foundation
 - [x] M1.1 Repository scaffold (Next.js 16 JS/JSX, Tailwind v4, lint, `.env.example`)
-- [ ] M1.2 Config and API base (env validation, request ID, envelope, health)
+- [x] M1.2 Config and API base (env validation, request ID, envelope, health)
 - [ ] M1.3 Database plumbing (drizzle config, client, schema index, migration command)
 - [ ] M1.4 Schema: users/sessions/admin/audit/tokens
 - [ ] M1.5 Schema: providers/categories/skills/areas/verification
@@ -133,11 +133,21 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | Date | Command | Result | Notes |
 |---|---|---|---|
 | 2026-11-18 | `npm run lint` | Pass | 0 errors, 0 warnings |
-| 2026-11-18 | `npm run build` | Pass | Next.js 16.4.6, static `/` and `/_not-found` |
+| 2026-11-18 | `npm run build` | Pass | Next.js 16.4.6; `/api/v1/health` is dynamic (`ƒ`) |
+| 2026-11-18 | `next start` + `curl /api/v1/health` | Pass | 200 envelope, `x-request-id` header, client ID honored |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-18 — M1.2 — Config and API base
+
+- Added `src/lib/config/env.js`: dependency-free env validation (`validateEnv`, `getEnv`, `ConfigError`); production requires `APP_URL`, `DATABASE_URL`, `SESSION_SECRET`; all other values validated only when present.
+- Added `src/lib/api/request-id.js`: reuses a valid incoming `x-request-id` or generates a UUID.
+- Added `src/lib/api/response.js`: `successResponse` / `errorResponse` matching the SPEC-003 envelope and setting `x-request-id` plus `cache-control: no-store`.
+- Added `src/app/api/v1/health/route.js`: dynamic `GET /api/v1/health` returning `{ status, configuration, timestamp }` without exposing secrets.
+- Tests: `npm run lint` pass; `npm run build` pass; production server + `curl` confirmed 200 envelope and request-ID behavior. Health reports `configuration: "incomplete"` locally because no `.env` is set (expected).
+- Next step: M1.3 — `drizzle.config.js` verification, DB client, schema index, explicit migration command.
 
 ### 2026-11-18 — M1.1 — Initialized repository and pushed to GitHub
 
