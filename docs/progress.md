@@ -139,6 +139,13 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 
 Newest entries at the top. Do not delete history; append corrections instead.
 
+### 2026-11-18 — M1.1 — Initialized repository and pushed to GitHub
+
+- Initialized a standalone git repository in `HIRE-IT` (the project was nested inside the `/Users/mac` repo) with `main` as the default branch.
+- Committed the documentation baseline and scaffold (58 files), added remote `https://github.com/akash-kumar14/HIRE-IT.git`, pushed `main`.
+- Tests: no code changes; previous `npm run lint` and `npm run build` results still apply.
+- Next step: M1.2 — env validation, request ID, API response envelope helper, `GET /api/v1/health`.
+
 ### 2026-11-18 — M1.1 — Remove stale `.gitkeep` files
 
 - Deleted `.gitkeep` from non-empty folders: `src/styles/` (has `globals.css`) and `drizzle/` (contains `meta/`). Kept `.gitkeep` only in the 34 truly empty directories.
