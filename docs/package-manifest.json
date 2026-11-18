@@ -1,0 +1,16 @@
+{
+  "package": "AI-Powered Service Marketplace Architecture Documentation",
+  "version": "1.1",
+  "status": "Reconciled architecture baseline: JavaScript/JSX + Drizzle, canonical task states, geo decision open",
+  "documents": [
+    "README.md",
+    "01-architecture-specification.md",
+    "02-database-design.md",
+    "03-api-specification.md",
+    "04-implementation-plan.md",
+    "05-security-privacy-operations.md",
+    "06-architecture-decision-register.md",
+    "progress.md",
+    "ai_service_marketplace_complete_documentation.md"
+  ]
+}
