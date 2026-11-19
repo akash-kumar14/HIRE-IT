@@ -3,14 +3,14 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-19
-**Current focus:** M1.4 — Schema: users/sessions/admin/audit/tokens
-**Overall status:** Documentation baseline complete; M1.1–M1.3 done; implementation started.
+**Current focus:** M1.5 — Schema: providers/categories/skills/areas/verification
+**Overall status:** Documentation baseline complete; M1.1–M1.4 done; implementation started.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1–M1.3 done; M1.4–M1.11 pending |
+| M1 | Foundation | In progress | M1.1–M1.4 done; M1.5–M1.11 pending |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -31,7 +31,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M1.1 Repository scaffold (Next.js 16 JS/JSX, Tailwind v4, lint, `.env.example`)
 - [x] M1.2 Config and API base (env validation, request ID, envelope, health)
 - [x] M1.3 Database plumbing (drizzle config, client, schema index, migration command)
-- [ ] M1.4 Schema: users/sessions/admin/audit/tokens
+- [x] M1.4 Schema: users/sessions/admin/audit/tokens
 - [ ] M1.5 Schema: providers/categories/skills/areas/verification
 - [ ] M1.6 Schema: tasks/matching/offers/assignments
 - [ ] M1.7 Schema: availability/bookings/completion/messaging/notifications
@@ -139,10 +139,19 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | 2026-11-19 | `npm run build` | Pass | Next.js 16.4.6; `/api/v1/health` still dynamic |
 | 2026-11-19 | Node DB client checks | Pass | Missing/invalid `DATABASE_URL` → `ConfigError`; valid URL → lazy singleton, `closeDb()` clears it |
 | 2026-11-19 | `drizzle.config.js` import | Pass | Postgres dialect, schema index and `./drizzle` output resolved |
+| 2026-11-19 | Schema index import | Pass | 7 tables and 4 enums exported from `src/lib/db/schema/index.js` |
+| 2026-11-19 | `drizzle-kit generate` to temp dir | Pass | 7 tables, correct FKs, lowercase-email check, partial unique pending-deletion index; repo migrations untouched |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — M1.4 — Users and access schema
+
+- Changed: added `src/lib/db/schema/users.js` with `users`, `user_sessions`, `admin_profiles`, `admin_mfa_credentials`, `audit_logs`, `verification_tokens`, `account_deletion_requests` and enums for user status, admin role, token type, deletion status; enforced unique normalized email, hashed session/token uniqueness, one pending deletion request per user, and audit history preservation via `set null` FKs; re-exported the file from `src/lib/db/schema/index.js`.
+- Tests: `npm run lint` pass; `npm run build` pass; schema index import reports 7 tables / 4 enums; `drizzle-kit generate` into a temp directory produced correct SQL (check constraints, partial unique index, FKs) without writing to `drizzle/`. Vitest/Playwright still absent (M1.11), so no automated test file was added.
+- Blockers: migrations still deferred to M1.10; audit-log append-only enforcement still needs custom SQL/trigger in M1.10.
+- Next step: M1.5 — add `src/lib/db/schema/providers.js` with categories, skills, provider profiles, skills, service areas, and verification tables.
 
 ### 2026-11-19 — M1.3 — Database plumbing
 
