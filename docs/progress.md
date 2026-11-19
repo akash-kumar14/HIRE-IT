@@ -3,14 +3,14 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-19
-**Current focus:** M1.8 — Schema: payments/ledger/commission/idempotency/reconciliation
-**Overall status:** Documentation baseline complete; M1.1–M1.7 done; implementation started.
+**Current focus:** M1.9 — Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
+**Overall status:** Documentation baseline complete; M1.1–M1.8 done; implementation started.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1–M1.7 done; M1.8–M1.11 pending |
+| M1 | Foundation | In progress | M1.1–M1.8 done; M1.9–M1.11 pending |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.13; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -35,7 +35,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M1.5 Schema: providers/categories/skills/areas/verification
 - [x] M1.6 Schema: tasks/matching/offers/assignments
 - [x] M1.7 Schema: availability/bookings/completion/messaging/notifications
-- [ ] M1.8 Schema: payments/ledger/commission/idempotency/reconciliation
+- [x] M1.8 Schema: payments/ledger/commission/idempotency/reconciliation
 - [ ] M1.9 Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
 - [ ] M1.10 Migrations and seed (custom constraint SQL, up/down verified)
 - [ ] M1.11 Test and CI harness (Vitest, Playwright placeholder, Actions, build)
@@ -150,10 +150,19 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | 2026-11-19 | `drizzle-kit generate` (M1.6) to temp dir | Pass | 22 tables, ADR-112 task enum, canonical-state partial uniques, budget/schedule checks; repo migrations untouched |
 | 2026-11-19 | Booking/messaging schema import | Pass | 31 tables and 20 enums exported from `src/lib/db/schema/index.js` |
 | 2026-11-19 | `drizzle-kit generate` (M1.7) to temp dir | Pass | 31 tables, one active booking per task, single-use OTP fields, conversation/message constraints; repo migrations untouched |
+| 2026-11-19 | Payments schema import | Pass | 40 tables and 29 enums exported from `src/lib/db/schema/index.js` |
+| 2026-11-19 | `drizzle-kit generate` (M1.8) to temp dir | Pass | 40 tables, integer minor units, simulator flags, idempotency scope/key uniqueness, commission policy/version; repo migrations untouched |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — M1.8 — Payments, ledger, commission, idempotency, and reconciliation schema
+
+- Changed: added `src/lib/db/schema/payments.js` with `payments`, `refunds`, `payouts`, `commission_calculations`, `ledger_transactions`, `ledger_entries`, `idempotency_records`, `reconciliation_runs`, `reconciliation_exceptions` and financial status enums; used integer minor units plus currency, labeled simulator records as non-real, recorded provider-paid commission rate/amount/policy version, kept ledger entries append-only by design, and added scoped idempotency keys with request fingerprints. Re-exported from `src/lib/db/schema/index.js`.
+- Tests: `npm run lint` pass; `npm run build` pass; schema index import reports 40 tables / 29 enums; `drizzle-kit generate` into a temp directory produced correct SQL without writing to `drizzle/`. Vitest/Playwright still absent (M1.11), so no automated test file was added.
+- Blockers: append-only ledger trigger, balanced-transaction check, refund-total cap, and provider-overlap exclusion constraint still require reviewed custom SQL in M1.10; migrations still deferred to M1.10.
+- Next step: M1.9 — add `src/lib/db/schema/reviews.js`, `disputes.js`, and `jobs.js` with reviews/moderation/disputes/support/jobs/AI usage/settings tables.
 
 ### 2026-11-19 — M1.7 — Scheduling, completion, messaging, and notifications schema
 
