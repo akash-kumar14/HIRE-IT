@@ -3,14 +3,14 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-19
-**Current focus:** M1.9 — Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
-**Overall status:** Documentation baseline complete; M1.1–M1.8 done; implementation started.
+**Current focus:** M1.10 — Migrations and seed (custom constraint SQL, up/down verified)
+**Overall status:** Documentation baseline complete; M1.1–M1.9 done; implementation started.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1–M1.8 done; M1.9–M1.11 pending |
+| M1 | Foundation | In progress | M1.1–M1.9 done; M1.10–M1.11 pending |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.13; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -36,7 +36,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M1.6 Schema: tasks/matching/offers/assignments
 - [x] M1.7 Schema: availability/bookings/completion/messaging/notifications
 - [x] M1.8 Schema: payments/ledger/commission/idempotency/reconciliation
-- [ ] M1.9 Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
+- [x] M1.9 Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
 - [ ] M1.10 Migrations and seed (custom constraint SQL, up/down verified)
 - [ ] M1.11 Test and CI harness (Vitest, Playwright placeholder, Actions, build)
 
@@ -152,10 +152,19 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | 2026-11-19 | `drizzle-kit generate` (M1.7) to temp dir | Pass | 31 tables, one active booking per task, single-use OTP fields, conversation/message constraints; repo migrations untouched |
 | 2026-11-19 | Payments schema import | Pass | 40 tables and 29 enums exported from `src/lib/db/schema/index.js` |
 | 2026-11-19 | `drizzle-kit generate` (M1.8) to temp dir | Pass | 40 tables, integer minor units, simulator flags, idempotency scope/key uniqueness, commission policy/version; repo migrations untouched |
+| 2026-11-19 | Quality/ops schema import | Pass | 51 tables and 42 enums exported from `src/lib/db/schema/index.js` |
+| 2026-11-19 | `drizzle-kit generate` (M1.9) to temp dir | Pass | 51 tables, one review per task/participant, one active dispute per task, job idempotency, AI usage metadata; repo migrations untouched |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — M1.9 — Quality, dispute, support, and operations schema
+
+- Changed: added `src/lib/db/schema/reviews.js` with `reviews`, `review_reports`, `moderation_cases`; added `src/lib/db/schema/disputes.js` with `disputes`, `dispute_evidence`, `dispute_admin_notes`, `support_tickets`, `support_ticket_messages`; added `src/lib/db/schema/jobs.js` with `background_jobs`, `ai_usage_records`, `platform_settings` and related enums. Enforced one review per task/participant, one report per reviewer/review, one active dispute per task, private admin/internal notes, job idempotency keys and lease fields, token/latency usage counters without prompt/response bodies, and public/private platform settings. Re-exported all from `src/lib/db/schema/index.js`.
+- Tests: `npm run lint` pass; `npm run build` pass; schema index import reports 51 tables / 42 enums; `drizzle-kit generate` into a temp directory produced correct SQL without writing to `drizzle/`. Vitest/Playwright still absent (M1.11), so no automated test file was added.
+- Blockers: provider-overlap exclusion constraint, append-only ledger trigger, balanced-transaction check, and refund-total cap still require reviewed custom SQL in M1.10; migrations still deferred to M1.10.
+- Next step: M1.10 — generate reviewed versioned migrations, add custom SQL constraints, verify up/down against a database, and add seed data.
 
 ### 2026-11-19 — M1.8 — Payments, ledger, commission, idempotency, and reconciliation schema
 

@@ -4,3 +4,6 @@ export * from "./tasks.js";
 export * from "./bookings.js";
 export * from "./messaging.js";
 export * from "./payments.js";
+export * from "./reviews.js";
+export * from "./disputes.js";
+export * from "./jobs.js";
