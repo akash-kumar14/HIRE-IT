@@ -11,7 +11,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | In progress | M1.1–M1.4 done; M1.5–M1.11 pending |
-| M2 | Authentication and authorization | Not started | Phases M2.1–M2.10 |
+| M2 | Authentication and authorization | Not started | Phases M2.1–M2.13; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -51,6 +51,9 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [ ] M2.8 TOTP MFA enroll/confirm/verify/recovery
 - [ ] M2.9 Audit log and account deletion requests
 - [ ] M2.10 M2 tests (positive and negative paths)
+- [ ] M2.11 UI shell (route groups, nav, session guard, responsive tokens)
+- [ ] M2.12 Auth screens (register/login/logout/me, verification, reset)
+- [ ] M2.13 Admin MFA screens (enroll/confirm/verify/recovery)
 
 ### M3 — Provider applications and verification
 - [ ] M3.1 Categories/skills public reads and admin management
@@ -145,6 +148,13 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — Documentation — M2 UI phases scheduled
+
+- Changed: added `M2.11`–`M2.13` to `docs/04-implementation-plan.md` §3 and mirrored them in `docs/ai_service_marketplace_complete_documentation.md`; mirrored checkboxes and the M2 milestone note in `docs/progress.md`; added a sequencing rule to `AGENTS.md` §6.
+- Tests: docs-only change; `git diff --check` pass and phase IDs cross-checked. No code checks needed.
+- Blockers: none; `docs:build` script still missing, so generated documentation was mirrored manually.
+- Next step: continue M1.5; start `M2.11` only after `M2.10` passes.
 
 ### 2026-11-19 — M1.4 — Users and access schema
 
