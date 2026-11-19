@@ -3,14 +3,14 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-19
-**Current focus:** M1.10 — Migrations and seed (custom constraint SQL, up/down verified)
-**Overall status:** Documentation baseline complete; M1.1–M1.9 done; implementation started.
+**Current focus:** M1.11 — Test and CI harness
+**Overall status:** Documentation baseline complete; M1.1–M1.10 done; M1.11 in progress.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1–M1.9 done; M1.10–M1.11 pending |
+| M1 | Foundation | In progress | M1.1–M1.10 done; M1.11 pending |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.13; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -37,7 +37,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M1.7 Schema: availability/bookings/completion/messaging/notifications
 - [x] M1.8 Schema: payments/ledger/commission/idempotency/reconciliation
 - [x] M1.9 Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
-- [ ] M1.10 Migrations and seed (custom constraint SQL, up/down verified)
+- [x] M1.10 Migrations and seed (custom constraint SQL, up/down verified)
 - [ ] M1.11 Test and CI harness (Vitest, Playwright placeholder, Actions, build)
 
 ### M2 — Authentication and authorization
@@ -154,10 +154,25 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | 2026-11-19 | `drizzle-kit generate` (M1.8) to temp dir | Pass | 40 tables, integer minor units, simulator flags, idempotency scope/key uniqueness, commission policy/version; repo migrations untouched |
 | 2026-11-19 | Quality/ops schema import | Pass | 51 tables and 42 enums exported from `src/lib/db/schema/index.js` |
 | 2026-11-19 | `drizzle-kit generate` (M1.9) to temp dir | Pass | 51 tables, one review per task/participant, one active dispute per task, job idempotency, AI usage metadata; repo migrations untouched |
+| 2026-11-19 | `drizzle-kit check` | Pass | Migration journal and snapshots consistent for 0000–0002 |
+| 2026-11-19 | `npm run lint` / `npm run build` | Pass | M1.10 migration and seed files do not affect lint or production build |
+| 2026-11-19 | Migration up against Neon dev branch | Pass | 51 tables, 42 enums, 3 migration rows, `btree_gist`, 4 custom functions; seed 8 categories / 16 skills / 10 requirements / 4 settings |
+| 2026-11-19 | Custom constraint negative checks | Pass | Booking overlap rejected (23P01); unbalanced ledger, ledger update/delete, over-refund, and cumulative over-refund rejected (P0001); valid balanced ledger and refund accepted |
+| 2026-11-19 | Migration down against Neon dev branch | Pass | 0 tables, 0 enums, 0 migration rows, `btree_gist` removed, 0 custom functions |
+| 2026-11-19 | Migration re-up against Neon dev branch | Pass | `migrations applied successfully!`; final state restored |
+| 2026-11-19 | Final M1.10 checks | Pass | `npx drizzle-kit check`, `npm run lint`, and `npm run build` pass after down-migration cleanup edit |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — M1.10 — Migrations and seed
+
+- Changed: generated `drizzle/0000_full_schema.sql` from the 51-table schema, added `drizzle/0000_full_schema.down.sql`, added `drizzle/0001_custom_constraints.sql` with booking overlap exclusion, append-only ledger trigger, ledger balance/entry triggers, refund total/currency trigger, and matching `.down.sql`; added `drizzle/0002_seed_data.sql` with deterministic categories, skills, verification requirements, and platform settings plus `drizzle/0002_seed_data.down.sql`. Initialized `drizzle/meta/_journal.json` and snapshots, removed `drizzle/meta/.gitkeep`, and added `DROP EXTENSION IF EXISTS btree_gist` to the custom down migration.
+- Tests: `npx drizzle-kit check` pass; `npm run lint` pass; `npm run build` pass. Applied all three migrations to the Neon dev branch: 51 tables, 42 enums, 3 migration rows, `btree_gist`, 4 custom functions, and seed counts 8/16/10/4. Negative checks confirmed booking overlap (23P01), unbalanced ledger, ledger update/delete, and over-refund/cumulative over-refund (P0001) are rejected while valid balanced ledger and refund inserts are accepted. Down migrations removed all tables/enums/migration rows/extension/functions; re-running `npm run db:migrate` restored the final state.
+- Security: restored `.env.example` to a blank `DATABASE_URL=` placeholder after a live URL was pasted there; no secret was committed or pushed.
+- Blockers: none. Vitest/Playwright are still deferred to M1.11; no automated test file was added.
+- Next step: M1.11 — install/configure Vitest, Playwright placeholder, GitHub Actions, and confirm the production build.
 
 ### 2026-11-19 — M1.9 — Quality, dispute, support, and operations schema
 
