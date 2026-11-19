@@ -3,14 +3,14 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-19
-**Current focus:** M1.11 — Test and CI harness
-**Overall status:** Documentation baseline complete; M1.1–M1.10 done; M1.11 in progress.
+**Current focus:** M2.1 — Users/sessions data layer and password hashing
+**Overall status:** Documentation baseline complete; M1.1–M1.11 done; M2.1 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1–M1.10 done; M1.11 pending |
+| M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.13; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -38,7 +38,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M1.8 Schema: payments/ledger/commission/idempotency/reconciliation
 - [x] M1.9 Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
 - [x] M1.10 Migrations and seed (custom constraint SQL, up/down verified)
-- [ ] M1.11 Test and CI harness (Vitest, Playwright placeholder, Actions, build)
+- [x] M1.11 Test and CI harness (Vitest, Playwright placeholder, Actions, build)
 
 ### M2 — Authentication and authorization
 - [ ] M2.1 Users/sessions data layer and password hashing
@@ -124,14 +124,13 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 
 ## Current blockers
 
-- Test harness not installed yet (Vitest/Playwright) — planned in M1.11.
 - `npm audit` reports 0 production vulnerabilities; 4 moderate dev-only advisories (esbuild via `drizzle-kit` / `@esbuild-kit` loader).
 - ADR-113 geographic matching choice open (PostGIS vs numeric + haversine).
 - Vendor checks pending: Vercel plan, Neon PostGIS availability, Gemini terms/quotas, R2, Resend, Sentry.
 
 ## Test status
 
-No test suite exists yet. Once `package.json` is added, record runs here:
+Test harness is available from M1.11; record runs here:
 
 | Date | Command | Result | Notes |
 |---|---|---|---|
@@ -161,10 +160,23 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | 2026-11-19 | Migration down against Neon dev branch | Pass | 0 tables, 0 enums, 0 migration rows, `btree_gist` removed, 0 custom functions |
 | 2026-11-19 | Migration re-up against Neon dev branch | Pass | `migrations applied successfully!`; final state restored |
 | 2026-11-19 | Final M1.10 checks | Pass | `npx drizzle-kit check`, `npm run lint`, and `npm run build` pass after down-migration cleanup edit |
+| 2026-11-19 | Pinned test dependencies | Pass | `vitest@4.1.12` and `@playwright/test@1.65.1` installed as exact dev dependencies; lockfile updated |
+| 2026-11-19 | `npm test` | Pass | 2 unit test files, 5 tests; request ID and API envelope covered |
+| 2026-11-19 | `npm run test:integration` without `DATABASE_URL` | Pass | 1 integration test skipped as designed |
+| 2026-11-19 | `npm run test:integration` with `DATABASE_URL` | Pass | 1 integration test passed; `select 1` against Neon dev branch |
+| 2026-11-19 | `npm run test:e2e -- --list` | Pass | 1 Playwright health smoke test discovered; browser install deferred |
+| 2026-11-19 | M1.11 final checks | Pass | `npm run lint`, `npm test`, `npm run test:integration`, Playwright list, and `npm run build` all pass |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — M1.11 — Test and CI harness
+
+- Changed: added exact dev dependencies `vitest@4.1.12` and `@playwright/test@1.65.1`; added `vitest.config.js`, `vitest.integration.config.js`, and `playwright.config.js`; updated `test:integration` to use the integration config; added unit tests for `createRequestId` and the API response envelope, an integration smoke test that skips without `DATABASE_URL`, and a Playwright health smoke test; added `.github/workflows/ci.yml` running `npm ci`, lint, unit tests, integration tests, Playwright discovery, and production build with non-secret dummy env values.
+- Tests: `npm run lint` pass; `npm test` pass (2 files / 5 tests); `npm run test:integration` skipped without `DATABASE_URL` and passed with it (1 test); `npm run test:e2e -- --list` discovered 1 test; `npm run build` pass.
+- Blockers: none. Playwright browsers are not installed locally; CI runs placeholder discovery only until E2E milestones. `npm audit` still reports 4 moderate dev-only advisories; ADR-113 and vendor checks remain open.
+- Next step: M2.1 — add `bcryptjs`, users/sessions data layer, password hashing, and session create/revoke helpers.
 
 ### 2026-11-19 — M1.10 — Migrations and seed
 
