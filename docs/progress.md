@@ -3,14 +3,14 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-19
-**Current focus:** M1.6 — Schema: tasks/matching/offers/assignments
-**Overall status:** Documentation baseline complete; M1.1–M1.5 done; implementation started.
+**Current focus:** M1.7 — Schema: availability/bookings/completion/messaging/notifications
+**Overall status:** Documentation baseline complete; M1.1–M1.6 done; implementation started.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1–M1.5 done; M1.6–M1.11 pending |
+| M1 | Foundation | In progress | M1.1–M1.6 done; M1.7–M1.11 pending |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.13; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -33,7 +33,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M1.3 Database plumbing (drizzle config, client, schema index, migration command)
 - [x] M1.4 Schema: users/sessions/admin/audit/tokens
 - [x] M1.5 Schema: providers/categories/skills/areas/verification
-- [ ] M1.6 Schema: tasks/matching/offers/assignments
+- [x] M1.6 Schema: tasks/matching/offers/assignments
 - [ ] M1.7 Schema: availability/bookings/completion/messaging/notifications
 - [ ] M1.8 Schema: payments/ledger/commission/idempotency/reconciliation
 - [ ] M1.9 Schema: reviews/moderation/disputes/support/jobs/AI usage/settings
@@ -146,10 +146,19 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | 2026-11-19 | `drizzle-kit generate` to temp dir | Pass | 7 tables, correct FKs, lowercase-email check, partial unique pending-deletion index; repo migrations untouched |
 | 2026-11-19 | Provider schema import | Pass | 14 tables and 6 enums exported from `src/lib/db/schema/index.js` |
 | 2026-11-19 | `drizzle-kit generate` (M1.5) to temp dir | Pass | 14 tables, geo ranges, experience/validity checks, composite provider-skill key; repo migrations untouched |
+| 2026-11-19 | Task schema import | Pass | 22 tables and 14 enums exported from `src/lib/db/schema/index.js` |
+| 2026-11-19 | `drizzle-kit generate` (M1.6) to temp dir | Pass | 22 tables, ADR-112 task enum, canonical-state partial uniques, budget/schedule checks; repo migrations untouched |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — M1.6 — Task, matching, and offer schema
+
+- Changed: added `src/lib/db/schema/tasks.js` with `tasks`, `task_requirements`, `task_locations`, `task_attachments`, `match_runs`, `match_candidates`, `offers`, `task_assignments` and enums for ADR-112 task states, mode, requirement/location types, match/offer/assignment statuses; preserved original description separately, kept relational authoritative fields plus non-authoritative JSON, enforced one active assignment and one submitted offer per provider/task, and added location privacy via `revealed_at`; re-exported from `src/lib/db/schema/index.js`.
+- Tests: `npm run lint` pass; `npm run build` pass; schema index import reports 22 tables / 14 enums; `drizzle-kit generate` into a temp directory produced correct SQL without writing to `drizzle/`. Vitest/Playwright still absent (M1.11), so no automated test file was added.
+- Blockers: migrations still deferred to M1.10; authoritative state-transition service arrives in M4.4.
+- Next step: M1.7 — add `src/lib/db/schema/bookings.js` with availability, exceptions, bookings, completion confirmations, messaging, and notifications.
 
 ### 2026-11-19 — M1.5 — Provider and verification schema
 
