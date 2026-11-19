@@ -2,15 +2,15 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-18
-**Current focus:** M1.3 — Database plumbing
-**Overall status:** Documentation baseline complete; M1.1–M1.2 done; implementation started.
+**Last updated:** 2026-11-19
+**Current focus:** M1.4 — Schema: users/sessions/admin/audit/tokens
+**Overall status:** Documentation baseline complete; M1.1–M1.3 done; implementation started.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
-| M1 | Foundation | In progress | M1.1–M1.2 done; M1.3–M1.11 pending |
+| M1 | Foundation | In progress | M1.1–M1.3 done; M1.4–M1.11 pending |
 | M2 | Authentication and authorization | Not started | Phases M2.1–M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
@@ -30,7 +30,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 ### M1 — Foundation
 - [x] M1.1 Repository scaffold (Next.js 16 JS/JSX, Tailwind v4, lint, `.env.example`)
 - [x] M1.2 Config and API base (env validation, request ID, envelope, health)
-- [ ] M1.3 Database plumbing (drizzle config, client, schema index, migration command)
+- [x] M1.3 Database plumbing (drizzle config, client, schema index, migration command)
 - [ ] M1.4 Schema: users/sessions/admin/audit/tokens
 - [ ] M1.5 Schema: providers/categories/skills/areas/verification
 - [ ] M1.6 Schema: tasks/matching/offers/assignments
@@ -122,7 +122,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 ## Current blockers
 
 - Test harness not installed yet (Vitest/Playwright) — planned in M1.11.
-- `npm audit` reports 14 high-severity dev-only advisories (typescript-eslint chain via `eslint-config-next`); production dependencies report 0 vulnerabilities.
+- `npm audit` reports 0 production vulnerabilities; 4 moderate dev-only advisories (esbuild via `drizzle-kit` / `@esbuild-kit` loader).
 - ADR-113 geographic matching choice open (PostGIS vs numeric + haversine).
 - Vendor checks pending: Vercel plan, Neon PostGIS availability, Gemini terms/quotas, R2, Resend, Sentry.
 
@@ -135,10 +135,21 @@ No test suite exists yet. Once `package.json` is added, record runs here:
 | 2026-11-18 | `npm run lint` | Pass | 0 errors, 0 warnings |
 | 2026-11-18 | `npm run build` | Pass | Next.js 16.4.6; `/api/v1/health` is dynamic (`ƒ`) |
 | 2026-11-18 | `next start` + `curl /api/v1/health` | Pass | 200 envelope, `x-request-id` header, client ID honored |
+| 2026-11-19 | `npm run lint` | Pass | 0 errors, 0 warnings |
+| 2026-11-19 | `npm run build` | Pass | Next.js 16.4.6; `/api/v1/health` still dynamic |
+| 2026-11-19 | Node DB client checks | Pass | Missing/invalid `DATABASE_URL` → `ConfigError`; valid URL → lazy singleton, `closeDb()` clears it |
+| 2026-11-19 | `drizzle.config.js` import | Pass | Postgres dialect, schema index and `./drizzle` output resolved |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-19 — M1.3 — Database plumbing
+
+- Changed: added `@neondatabase/serverless`, `drizzle-orm`, `ws`, `drizzle-kit`, and `dotenv` (`package.json`, `package-lock.json`); added `src/lib/db/client.js` with lazy `getDb()` singleton, `closeDb()`, `DATABASE_URL` validation through `ConfigError`, and a `ws` fallback for Node 20; added empty `src/lib/db/schema/index.js` placeholder for M1.4+ domain schemas; `drizzle.config.js` loads `.env` via `dotenv/config`. Existing `npm run db:generate` / `npm run db:migrate` are the explicit migration commands.
+- Tests: `npm run lint` pass; `npm run build` pass; direct Node checks pass for missing/invalid/valid `DATABASE_URL`, singleton reuse, and Drizzle config loading. Vitest/Playwright still absent (M1.11), so no automated test file was added.
+- Blockers: no live Neon `DATABASE_URL`, so no migration was applied; 4 moderate dev-only npm advisories remain.
+- Next step: M1.4 — add `src/lib/db/schema/users.js` with users, sessions, admin, audit, and token tables.
 
 ### 2026-11-18 — M1.2 — Config and API base
 
