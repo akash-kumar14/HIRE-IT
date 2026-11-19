@@ -74,6 +74,8 @@ Route handlers stay thin: validate/authenticate, then call a module service. Bus
 
 Work in phases, not whole milestones. Each phase (e.g. `M2.4`) is sized to fit in roughly 80% of one context window: one domain slice, one testable outcome, ~10 files max. Phase definitions are in `docs/04-implementation-plan.md` §3 and mirrored as checkboxes in `docs/progress.md`.
 
+Finish all phases of a milestone before starting the next one. M2 UI phases (`M2.11`–`M2.13`) start only after `M2.10` passes; do not pull UI work forward.
+
 1. Read `docs/progress.md` and the SPEC sections relevant to the current phase only.
 2. Check ADRs before choosing an approach; do not silently override an approved decision.
 3. Implement that one phase; if it outgrows the context budget, split it (`M2.4a`/`M2.4b`) and record the split in `docs/progress.md`.

@@ -78,8 +78,8 @@ Phases:
 
 ### M2 — Authentication and authorization
 
-Deliver: registration, login, custom sessions (`user_sessions`), email verification, reset, account deletion requests, initial super-admin bootstrap, TOTP MFA, policies, audit log.
-Acceptance: duplicate email blocked; suspended users restricted; admin MFA required; email-only recovery cannot bypass admin MFA; unauthorized access tests pass; reset tokens expire and are single-use.
+Deliver: registration, login, custom sessions (`user_sessions`), email verification, reset, account deletion requests, initial super-admin bootstrap, TOTP MFA, policies, audit log, authenticated UI shell, auth screens, and admin MFA screens.
+Acceptance: duplicate email blocked; suspended users restricted; admin MFA required; email-only recovery cannot bypass admin MFA; unauthorized access tests pass; reset tokens expire and are single-use; UI uses design tokens and existing endpoints only.
 
 Phases:
 - `M2.1` Users/sessions data layer: password hashing (`bcryptjs`), session create/revoke helpers, unique normalized email.
@@ -92,6 +92,9 @@ Phases:
 - `M2.8` TOTP MFA: enroll, confirm, verify, recovery codes; email recovery cannot bypass MFA.
 - `M2.9` Audit log and account deletion requests (create + current status).
 - `M2.10` M2 test suite: positive and negative authorization/recovery paths.
+- `M2.11` UI shell: customer/provider/admin route groups, shared navigation, session guard, responsive layout using design tokens.
+- `M2.12` Auth screens: register, login, logout, current profile, email verification request/confirm, password reset request/confirm.
+- `M2.13` Admin MFA screens: enroll, confirm, verify, recovery codes; admin-only access and no email-only bypass.
 
 ### M3 — Provider applications and verification
 
