@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-20
-**Current focus:** M2.3 — Email verification tokens and endpoints
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.2 done; M2.3 next.
+**Current focus:** M2.4 — Password reset (expiry, single use, session revocation)
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.3 done; M2.4 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.2 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.3 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -43,7 +43,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 ### M2 — Authentication and authorization
 - [x] M2.1 Users/sessions data layer and password hashing
 - [x] M2.2 Register/login/logout/me with secure cookies
-- [ ] M2.3 Email verification tokens and endpoints
+- [x] M2.3 Email verification tokens and endpoints
 - [ ] M2.4 Password reset (expiry, single use, session revocation)
 - [ ] M2.5 Shared DB-backed rate limiting
 - [ ] M2.6 Authorization core (status guard, ownership helpers)
@@ -175,10 +175,20 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-20 | `npm test` (M2.2) | Pass | 7 unit test files, 25 tests; validation, session cookies, request envelope, hashing, and tokens covered |
 | 2026-11-20 | `npm run test:integration` (M2.2) | Pass | 5 auth route tests passed against Neon dev branch; 4 M2.1 tests passed, 1 legacy smoke test skipped |
 | 2026-11-20 | M2.2 production build | Pass | Four new `/api/v1/auth/*` route handlers compile as dynamic routes; Playwright discovery unchanged |
+| 2026-11-20 | `npm test` (M2.3) | Pass | 8 unit test files, 30 tests; verification tokens and confirm validation covered |
+| 2026-11-20 | `npm run test:integration` (M2.3) | Pass | 3 email verification tests passed against Neon dev branch; 9 earlier integration tests passed, 1 skipped |
+| 2026-11-20 | M2.3 production build | Pass | Two new verification routes compile as dynamic routes; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-20 — M2.3 — Email verification tokens and endpoints
+
+- Changed: added `POST /api/v1/auth/email-verification` (authenticated, generic `202`) and `POST /api/v1/auth/email-verification/confirm` (token in JSON body). Added `src/modules/auth/verification-token.js` (32-byte URL-safe token plus SHA-256 hash), `src/modules/auth/verification.service.js` (24-hour expiry, hashed single-use storage, old-token invalidation, atomic consume, `emailVerifiedAt` update), and `src/infrastructure/email/stub.js` (no-op delivery stub that never logs or returns the token). Extended `auth.validation.js` for confirm tokens and `handler.js` to map `INVALID_VERIFICATION_TOKEN` to a generic `400`. Added unit tests for token generation/validation and integration tests for hashed storage, one-time use, expiry, malformed tokens, and unauthenticated requests.
+- Tests: `npm run lint` pass; `npm test` pass (8 files / 30 tests); `npm run test:integration` pass locally with Neon (12 tests passed, 1 skipped); `npm run test:e2e -- --list` pass (1 test); `npm run build` pass with two new dynamic verification routes.
+- Blockers: none. The email sender is a stub; Resend/email delivery wiring remains for later infrastructure work. Rate limiting is deferred to M2.5, and CI still skips integration tests because it has no Postgres service.
+- Next step: M2.4 — implement generic password reset request/confirm with hashed single-use tokens and session revocation on password change.
 
 ### 2026-11-20 — M2.2 — Auth endpoints and secure cookies
 

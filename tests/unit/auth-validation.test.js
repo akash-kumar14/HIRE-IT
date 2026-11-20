@@ -3,6 +3,7 @@ import {
   readJsonBody,
   validateLogin,
   validateRegistration,
+  validateVerificationConfirm,
   ValidationError,
 } from "@/modules/auth/auth.validation.js";
 
@@ -66,6 +67,23 @@ describe("validateLogin", () => {
   it("rejects a non-object body", () => {
     expect(() => validateLogin([])).toThrow(
       "Request body must be a JSON object.",
+    );
+  });
+});
+
+describe("validateVerificationConfirm", () => {
+  it("returns a trimmed token", () => {
+    expect(
+      validateVerificationConfirm({ token: "  verification-token  " }),
+    ).toEqual({ token: "verification-token" });
+  });
+
+  it("rejects a missing token", () => {
+    expect(() => validateVerificationConfirm({})).toThrow(
+      "Verification token is required.",
+    );
+    expect(() => validateVerificationConfirm({ token: "   " })).toThrow(
+      "Verification token is required.",
     );
   });
 });

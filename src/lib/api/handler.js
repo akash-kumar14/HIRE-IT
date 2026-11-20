@@ -29,6 +29,14 @@ export async function handleRequest(request, handler) {
       });
     }
 
+    if (error?.code === "INVALID_VERIFICATION_TOKEN") {
+      return errorResponse(
+        "INVALID_VERIFICATION_TOKEN",
+        "Invalid or expired token.",
+        { status: 400, requestId },
+      );
+    }
+
     return errorResponse("INTERNAL_ERROR", "Unexpected error.", {
       status: 500,
       requestId,
