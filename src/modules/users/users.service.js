@@ -2,6 +2,18 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client.js";
 import { users } from "@/lib/db/schema/users.js";
 
+export function toPublicUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    phone: user.phone,
+    status: user.status,
+    emailVerifiedAt: user.emailVerifiedAt,
+    createdAt: user.createdAt,
+  };
+}
+
 export class DuplicateEmailError extends Error {
   constructor() {
     super("Email is already registered");
