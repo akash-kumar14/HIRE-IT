@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-20
-**Current focus:** M2.2 — Register/login/logout/me with secure cookies
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1 done; M2.2 next.
+**Current focus:** M2.3 — Email verification tokens and endpoints
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.2 done; M2.3 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.2 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -42,7 +42,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 
 ### M2 — Authentication and authorization
 - [x] M2.1 Users/sessions data layer and password hashing
-- [ ] M2.2 Register/login/logout/me with secure cookies
+- [x] M2.2 Register/login/logout/me with secure cookies
 - [ ] M2.3 Email verification tokens and endpoints
 - [ ] M2.4 Password reset (expiry, single use, session revocation)
 - [ ] M2.5 Shared DB-backed rate limiting
@@ -172,10 +172,20 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-20 | `npm test` (M2.1) | Pass | 5 unit test files, 16 tests; password hashing, session tokens, and email normalization covered |
 | 2026-11-20 | `npm run test:integration` (M2.1) | Pass | 4 users/sessions tests passed against Neon dev branch; 1 legacy smoke test skipped |
 | 2026-11-20 | M2.1 final checks | Pass | `npm run lint`, `npm run test:e2e -- --list`, and `npm run build` pass; integration test timeout raised to 20s for Neon latency |
+| 2026-11-20 | `npm test` (M2.2) | Pass | 7 unit test files, 25 tests; validation, session cookies, request envelope, hashing, and tokens covered |
+| 2026-11-20 | `npm run test:integration` (M2.2) | Pass | 5 auth route tests passed against Neon dev branch; 4 M2.1 tests passed, 1 legacy smoke test skipped |
+| 2026-11-20 | M2.2 production build | Pass | Four new `/api/v1/auth/*` route handlers compile as dynamic routes; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-20 — M2.2 — Auth endpoints and secure cookies
+
+- Changed: added `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, and `GET /api/v1/auth/me` route handlers. Added `src/modules/auth/auth.validation.js` (JSON body and field validation), `src/modules/auth/auth.service.js` (registration, login, current-session lookup, logout, generic invalid-credentials handling, suspended/deleted user rejection), `src/modules/auth/session-cookie.js` (HTTP-only `lax` cookie with `secure` in production and 7-day max age), and `src/lib/api/handler.js` (request ID plus validation/auth/duplicate error mapping to the API envelope). Added `toPublicUser` to `src/modules/users/users.service.js` so password hashes are never serialized. Added unit tests for validation/cookies and integration tests for register → me → logout, login success/failure, duplicate/invalid payloads, suspended users, and unauthenticated logout.
+- Tests: `npm run lint` pass; `npm test` pass (7 files / 25 tests); `npm run test:integration` pass locally with Neon (9 tests passed, 1 skipped); `npm run test:e2e -- --list` pass (1 test); `npm run build` pass with four new dynamic auth routes.
+- Blockers: none. Rate limiting is deferred to M2.5, email verification to M2.3, and CSRF hardening beyond `SameSite=Lax` to later security work. CI still skips integration tests because it has no Postgres service; they were run locally against the Neon dev branch.
+- Next step: M2.3 — add hashed single-use email verification tokens and request/confirm endpoints.
 
 ### 2026-11-20 — M2.1 — Users and sessions data layer
 
