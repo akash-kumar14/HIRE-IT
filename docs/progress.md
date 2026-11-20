@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-20
-**Current focus:** M2.1 — Users/sessions data layer and password hashing
-**Overall status:** Documentation baseline complete; M1.1–M1.11 done; M2.1 next.
+**Current focus:** M2.2 — Register/login/logout/me with secure cookies
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1 done; M2.2 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | Not started | Phases M2.1–M2.13; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -41,7 +41,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M1.11 Test and CI harness (Vitest, Playwright placeholder, Actions, build)
 
 ### M2 — Authentication and authorization
-- [ ] M2.1 Users/sessions data layer and password hashing
+- [x] M2.1 Users/sessions data layer and password hashing
 - [ ] M2.2 Register/login/logout/me with secure cookies
 - [ ] M2.3 Email verification tokens and endpoints
 - [ ] M2.4 Password reset (expiry, single use, session revocation)
@@ -168,10 +168,21 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-19 | M1.11 final checks | Pass | `npm run lint`, `npm test`, `npm run test:integration`, Playwright list, and `npm run build` all pass |
 | 2026-11-20 | `npm ci` with npm 10 (CI parity) | Pass | Clean install succeeds after regenerating `package-lock.json` with npm 10; npm 11 also succeeds |
 | 2026-11-20 | Full CI sequence | Pass | `npm run lint`, `npm test`, `npm run test:integration`, Playwright list, and `npm run build` all pass |
+| 2026-11-20 | `npm ci` with npm 10 after `bcryptjs` | Pass | Clean install succeeds with the npm 10-generated lockfile |
+| 2026-11-20 | `npm test` (M2.1) | Pass | 5 unit test files, 16 tests; password hashing, session tokens, and email normalization covered |
+| 2026-11-20 | `npm run test:integration` (M2.1) | Pass | 4 users/sessions tests passed against Neon dev branch; 1 legacy smoke test skipped |
+| 2026-11-20 | M2.1 final checks | Pass | `npm run lint`, `npm run test:e2e -- --list`, and `npm run build` pass; integration test timeout raised to 20s for Neon latency |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-20 — M2.1 — Users and sessions data layer
+
+- Changed: added exact `bcryptjs@3.0.3` dependency and regenerated `package-lock.json` with npm 10. Added `src/modules/auth/password.js` (bcrypt cost 12, plaintext never stored), `src/modules/auth/session-token.js` (32-byte URL-safe token plus SHA-256 hash), `src/modules/auth/sessions.service.js` (create/find/touch/revoke helpers with 7-day TTL), and `src/modules/users/users.service.js` (normalized email, create/find/update helpers, `DuplicateEmailError` that unwraps Drizzle query errors). Added unit tests for password/token/email helpers and integration tests for duplicate email prevention, password rotation, session lookup, revocation, and expiry. Removed the unused dummy `DATABASE_URL` from `.github/workflows/ci.yml` after the merged lockfile fix exposed a second CI failure in integration tests; raised the integration test timeout to 20s in `vitest.integration.config.js`.
+- Tests: `npm ci` with npm 10 pass; `npm run lint` pass; `npm test` pass (5 files / 16 tests); `npm run test:integration` pass locally with Neon (4 tests, 1 skipped); `npm run test:e2e -- --list` pass (1 test); `npm run build` pass.
+- Blockers: none. CI has no Postgres service, so integration tests skip there; they are run locally against the Neon dev branch until M9.4 adds a real CI database. No secrets were added; `.env` remains ignored.
+- Next step: M2.2 — implement register, login, logout, and `GET /auth/me` with secure HTTP-only cookies using these helpers.
 
 ### 2026-11-20 — M1.11 — Fix CI `npm ci` failure
 
