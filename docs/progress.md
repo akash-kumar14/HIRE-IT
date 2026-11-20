@@ -2,7 +2,7 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-19
+**Last updated:** 2026-11-20
 **Current focus:** M2.1 — Users/sessions data layer and password hashing
 **Overall status:** Documentation baseline complete; M1.1–M1.11 done; M2.1 next.
 
@@ -166,10 +166,19 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-19 | `npm run test:integration` with `DATABASE_URL` | Pass | 1 integration test passed; `select 1` against Neon dev branch |
 | 2026-11-19 | `npm run test:e2e -- --list` | Pass | 1 Playwright health smoke test discovered; browser install deferred |
 | 2026-11-19 | M1.11 final checks | Pass | `npm run lint`, `npm test`, `npm run test:integration`, Playwright list, and `npm run build` all pass |
+| 2026-11-20 | `npm ci` with npm 10 (CI parity) | Pass | Clean install succeeds after regenerating `package-lock.json` with npm 10; npm 11 also succeeds |
+| 2026-11-20 | Full CI sequence | Pass | `npm run lint`, `npm test`, `npm run test:integration`, Playwright list, and `npm run build` all pass |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-20 — M1.11 — Fix CI `npm ci` failure
+
+- Changed: regenerated `package-lock.json` with `npm@10.9.3` (`npx npm@10.9.3 install --package-lock-only --ignore-scripts`). The npm 11-generated lockfile placed `esbuild@0.28.2` under `tsx`, while Node 20 CI (npm 10) resolves it under `vitest`, so `npm ci` failed with `EUSAGE: Missing: esbuild@0.28.2 from lock file` and all later steps were skipped.
+- Tests: reproduced with `npx npm@10.9.3 ci` before the fix (failure) and after (pass); `npm ci` with npm 11 also passes; `npm run lint`, `npm test`, `npm run test:integration`, `npm run test:e2e -- --list`, and `npm run build` all pass after the fix.
+- Blockers: none. CI check logs could not be downloaded without repo admin rights; failure step was identified from the public Actions jobs API.
+- Next step: push the regenerated lockfile to the PR branch and rerun the `CI / verify (pull_request)` check, then merge and continue with M2.1.
 
 ### 2026-11-19 — M1.11 — Test and CI harness
 
