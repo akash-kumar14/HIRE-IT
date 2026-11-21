@@ -47,20 +47,38 @@ export async function login(input) {
   return { token, user: toPublicUser(user) };
 }
 
-export async function getCurrentSession(token) {
+export async function inspectSession(token) {
   const session = await findActiveSessionByToken(token);
 
   if (!session) {
-    return null;
+    return { session: null, user: null, accountStatus: "anonymous" };
   }
 
   const user = await findUserById(session.userId);
 
+  if (!user) {
+    return { session, user: null, accountStatus: "missing" };
+  }
+
+  if (user.deletedAt !== null || user.status === "deleted") {
+    return { session, user: toPublicUser(user), accountStatus: "deleted" };
+  }
+
   if (!isUsableUser(user)) {
+    return { session, user: toPublicUser(user), accountStatus: "suspended" };
+  }
+
+  return { session, user: toPublicUser(user), accountStatus: "active" };
+}
+
+export async function getCurrentSession(token) {
+  const current = await inspectSession(token);
+
+  if (!current.session || current.accountStatus !== "active") {
     return null;
   }
 
-  return { session, user: toPublicUser(user) };
+  return { session: current.session, user: current.user };
 }
 
 export async function logout(token) {
