@@ -15,7 +15,8 @@
     "test:integration": "vitest run --config vitest.integration.config.js",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "admin:bootstrap": "node --import ./scripts/register-alias.js scripts/bootstrap-admin.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1",

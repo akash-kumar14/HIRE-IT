@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   AccountStatusError,
+  AdminPermissionError,
+  assertAdmin,
   assertCustomerOwnsTask,
   assertOwnedBy,
   assertProviderOwnsOffer,
+  assertSuperAdmin,
   AuthenticationError,
   AuthorizationError,
   ForbiddenError,
@@ -22,6 +25,10 @@ describe("authorization errors", () => {
     });
     expect(new ForbiddenError()).toMatchObject({
       code: "FORBIDDEN",
+      status: 403,
+    });
+    expect(new AdminPermissionError()).toMatchObject({
+      code: "ADMIN_ACCESS_REQUIRED",
       status: 403,
     });
     expect(new AuthenticationError()).toBeInstanceOf(AuthorizationError);
@@ -57,6 +64,22 @@ describe("ownership helpers", () => {
     expect(assertProviderOwnsOffer(offer, "provider-1")).toBe(offer);
     expect(() => assertProviderOwnsOffer(offer, "provider-2")).toThrow(
       ForbiddenError,
+    );
+  });
+});
+
+describe("admin assertions", () => {
+  it("requires an admin profile", () => {
+    const profile = { id: "admin-1", role: "admin" };
+    expect(assertAdmin(profile)).toBe(profile);
+    expect(() => assertAdmin(null)).toThrow(AdminPermissionError);
+  });
+
+  it("requires super-admin role for privileged actions", () => {
+    const superAdmin = { id: "admin-1", role: "super_admin" };
+    expect(assertSuperAdmin(superAdmin)).toBe(superAdmin);
+    expect(() => assertSuperAdmin({ id: "admin-2", role: "admin" })).toThrow(
+      AdminPermissionError,
     );
   });
 });

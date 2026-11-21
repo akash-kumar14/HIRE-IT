@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-21
-**Current focus:** M2.7 — Admin bootstrap and admin profiles
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.6 done; M2.7 next.
+**Current focus:** M2.8 — TOTP MFA enroll/confirm/verify/recovery
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.7 done; M2.8 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.6 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.7 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -47,7 +47,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.4 Password reset (expiry, single use, session revocation)
 - [x] M2.5 Shared DB-backed rate limiting
 - [x] M2.6 Authorization core (status guard, ownership helpers)
-- [ ] M2.7 Admin bootstrap and admin profiles
+- [x] M2.7 Admin bootstrap and admin profiles
 - [ ] M2.8 TOTP MFA enroll/confirm/verify/recovery
 - [ ] M2.9 Audit log and account deletion requests
 - [ ] M2.10 M2 tests (positive and negative paths)
@@ -190,10 +190,24 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-21 | `npm test` (M2.6) | Pass | 10 unit test files, 45 tests |
 | 2026-11-21 | `npm run test:integration` (M2.6) | Pass | 5 authorization guard tests passed against Neon dev branch; 19 earlier tests passed, 1 skipped |
 | 2026-11-21 | M2.6 production build | Pass | Auth routes compile with shared session guard; Playwright discovery unchanged |
+| 2026-11-21 | `npx drizzle-kit check` | Pass | Journal and snapshots consistent through `0004_admin_super_admin_unique` |
+| 2026-11-21 | `npm run db:migrate` | Pass | 0004 applied to Neon dev branch; one-super-admin partial unique index created |
+| 2026-11-21 | `npm test` (M2.7) | Pass | 11 unit test files, 49 tests |
+| 2026-11-21 | `npm run test:integration` (M2.7, first run) | Fail | Pre-existing rate-limit route test crossed a 15-minute window boundary; no production code change |
+| 2026-11-21 | `npm run test:integration` (M2.7, rerun) | Pass | 3 admin tests passed against Neon dev branch; 24 earlier tests passed, 1 skipped |
+| 2026-11-21 | `npm run admin:bootstrap` guard check | Pass | Refuses to run without `ADMIN_BOOTSTRAP_CONFIRM=1`; no DB changes |
+| 2026-11-21 | M2.7 production build | Pass | Node alias loader and CLI script added; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-21 — M2.7 — Admin bootstrap and profiles
+
+- Changed: added partial unique index `admin_profiles_single_super_admin_unique` in `src/lib/db/schema/users.js` and migration `drizzle/0004_admin_super_admin_unique.sql` with a reviewed `.down.sql`. Added `src/modules/admin/admin.service.js` with `bootstrapInitialSuperAdmin` (requires an existing active, verified user; refuses when any admin profile exists), `inviteAdmin` (super-admin-only, creates regular admins only), typed errors, and public profile mapping. Added `assertAdmin`/`assertSuperAdmin` to `src/modules/auth/authorization.js` and `requireAdminProfile` in `src/modules/admin/admin-authorization.js`. Added `scripts/bootstrap-admin.js` plus a small `@/` alias resolver so the CLI can import app modules, with `admin:bootstrap` in `package.json` and operator-only variables in `.env.example`. No public admin-creation endpoint was added. Fixed a pre-existing flaky rate-limit integration test by pinning `Date` during the 429 case.
+- Tests: `npx drizzle-kit check` pass; `npm run db:migrate` pass on Neon dev branch; `npm run lint` pass; `npm test` pass (11 files / 49 tests); `npm run test:integration` pass after rerun (27 tests passed, 1 skipped); CLI guard check pass; `npm run test:e2e -- --list` pass; `npm run build` pass.
+- Blockers: none. The first integration run failed because the rate-limit 429 test crossed a fixed-window boundary; the test now pins the clock. Admin MFA enforcement is deferred to M2.8; until then `requireAdminProfile` checks account status and admin role only. Additional admins are created only through the service by an existing super admin; no invite-token/email flow exists yet.
+- Next step: M2.8 — TOTP MFA enroll/confirm/verify/recovery codes, with no email-only bypass.
 
 ### 2026-11-21 — M2.6 — Authorization core
 

@@ -31,6 +31,12 @@ export class ForbiddenError extends AuthorizationError {
   }
 }
 
+export class AdminPermissionError extends AuthorizationError {
+  constructor() {
+    super("ADMIN_ACCESS_REQUIRED", "Administrator access is required.", 403);
+  }
+}
+
 export async function requireAuthenticatedUser(request) {
   const current = await inspectSession(readSessionToken(request));
 
@@ -70,4 +76,22 @@ export function assertCustomerOwnsTask(task, userId) {
 
 export function assertProviderOwnsOffer(offer, providerProfileId) {
   return assertOwnedBy(offer, providerProfileId, "providerProfileId");
+}
+
+export function assertAdmin(adminProfile) {
+  if (!adminProfile) {
+    throw new AdminPermissionError();
+  }
+
+  return adminProfile;
+}
+
+export function assertSuperAdmin(adminProfile) {
+  assertAdmin(adminProfile);
+
+  if (adminProfile.role !== "super_admin") {
+    throw new AdminPermissionError();
+  }
+
+  return adminProfile;
 }

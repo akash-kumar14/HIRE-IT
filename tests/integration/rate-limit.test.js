@@ -2,7 +2,7 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
 import { NextRequest } from "next/server";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { POST as requestReset } from "@/app/api/v1/auth/password-reset/route.js";
 import { consumeRateLimit } from "@/lib/api/rate-limit.js";
 import { getDb } from "@/lib/db/client.js";
@@ -62,31 +62,38 @@ describe.skipIf(!databaseUrl)("shared rate limiting", () => {
   });
 
   it("returns a sanitized 429 with Retry-After after the route limit is exceeded", async () => {
-    const email = `m25-${randomUUID()}@example.com`;
-    const ip = randomUUID();
-    cleanupSubjects.push(email, ip);
-    const url = "http://localhost/api/v1/auth/password-reset";
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-21T12:00:00.000Z"));
 
-    for (let attempt = 0; attempt < 10; attempt += 1) {
-      const response = await requestReset(jsonRequest(url, { email }, ip));
-      expect(response.status).toBe(202);
+    try {
+      const email = `m25-${randomUUID()}@example.com`;
+      const ip = randomUUID();
+      cleanupSubjects.push(email, ip);
+      const url = "http://localhost/api/v1/auth/password-reset";
+
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        const response = await requestReset(jsonRequest(url, { email }, ip));
+        expect(response.status).toBe(202);
+      }
+
+      const blocked = await requestReset(jsonRequest(url, { email }, ip));
+      expect(blocked.status).toBe(429);
+      const body = await blocked.json();
+      expect(body.success).toBe(false);
+      expect(body.error.code).toBe("RATE_LIMIT_EXCEEDED");
+      expect(body.meta.requestId).toBeTruthy();
+      expect(body.meta.retryAfterSeconds).toBeGreaterThan(0);
+      expect(blocked.headers.get("retry-after")).toBeTruthy();
+
+      const rows = await getDb()
+        .select()
+        .from(rateLimitCounters)
+        .where(inArray(rateLimitCounters.subject, [email, ip]));
+      expect(rows.find((row) => row.subject === email)?.count).toBe(11);
+      expect(rows.find((row) => row.subject === ip)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
     }
-
-    const blocked = await requestReset(jsonRequest(url, { email }, ip));
-    expect(blocked.status).toBe(429);
-    const body = await blocked.json();
-    expect(body.success).toBe(false);
-    expect(body.error.code).toBe("RATE_LIMIT_EXCEEDED");
-    expect(body.meta.requestId).toBeTruthy();
-    expect(body.meta.retryAfterSeconds).toBeGreaterThan(0);
-    expect(blocked.headers.get("retry-after")).toBeTruthy();
-
-    const rows = await getDb()
-      .select()
-      .from(rateLimitCounters)
-      .where(inArray(rateLimitCounters.subject, [email, ip]));
-    expect(rows.find((row) => row.subject === email)?.count).toBe(11);
-    expect(rows.find((row) => row.subject === ip)).toBeTruthy();
   });
 
   it("does not consume quota for invalid payloads", async () => {
