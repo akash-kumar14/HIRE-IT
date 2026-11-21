@@ -45,6 +45,19 @@ export async function handleRequest(request, handler) {
       );
     }
 
+    if (error?.code === "RATE_LIMIT_EXCEEDED") {
+      return errorResponse(
+        "RATE_LIMIT_EXCEEDED",
+        "Too many requests. Try again later.",
+        {
+          status: 429,
+          requestId,
+          headers: { "retry-after": String(error.retryAfterSeconds) },
+          meta: { retryAfterSeconds: error.retryAfterSeconds },
+        },
+      );
+    }
+
     return errorResponse("INTERNAL_ERROR", "Unexpected error.", {
       status: 500,
       requestId,
