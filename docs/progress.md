@@ -2,16 +2,16 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-20
-**Current focus:** M2.4 — Password reset (expiry, single use, session revocation)
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.3 done; M2.4 next.
+**Last updated:** 2026-11-21
+**Current focus:** M2.5 — Shared DB-backed rate limiting
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.4 done; M2.5 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.3 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.4 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -44,7 +44,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.1 Users/sessions data layer and password hashing
 - [x] M2.2 Register/login/logout/me with secure cookies
 - [x] M2.3 Email verification tokens and endpoints
-- [ ] M2.4 Password reset (expiry, single use, session revocation)
+- [x] M2.4 Password reset (expiry, single use, session revocation)
 - [ ] M2.5 Shared DB-backed rate limiting
 - [ ] M2.6 Authorization core (status guard, ownership helpers)
 - [ ] M2.7 Admin bootstrap and admin profiles
@@ -178,10 +178,20 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-20 | `npm test` (M2.3) | Pass | 8 unit test files, 30 tests; verification tokens and confirm validation covered |
 | 2026-11-20 | `npm run test:integration` (M2.3) | Pass | 3 email verification tests passed against Neon dev branch; 9 earlier integration tests passed, 1 skipped |
 | 2026-11-20 | M2.3 production build | Pass | Two new verification routes compile as dynamic routes; Playwright discovery unchanged |
+| 2026-11-21 | `npm test` (M2.4) | Pass | 8 unit test files, 34 tests; password reset request/confirm validation covered |
+| 2026-11-21 | `npm run test:integration` (M2.4) | Pass | 4 password reset tests passed against Neon dev branch; 12 earlier tests passed, 1 skipped |
+| 2026-11-21 | M2.4 production build | Pass | Two new `/api/v1/auth/password-reset*` routes compile as dynamic routes; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-21 — M2.4 — Password reset
+
+- Changed: added `POST /api/v1/auth/password-reset` (public, generic `202`) and `POST /api/v1/auth/password-reset/confirm` (token + new password). Added `src/modules/auth/password-reset.service.js` (1-hour hashed single-use tokens, prior-token invalidation, transactional consume + password hash update + `revokeAllUserSessions`), extended `auth.validation.js` and `handler.js` (`INVALID_PASSWORD_RESET_TOKEN` → generic `400`), and added a `sendPasswordResetEmail` stub that never logs or returns the token. Added unit validation tests and integration tests for unknown/suspended emails, hashed storage, expiry, reuse, session revocation, and old-password rejection.
+- Tests: `npm run lint` pass; `npm test` pass (8 files / 34 tests); `npm run test:integration` pass locally with Neon (16 tests passed, 1 skipped); `npm run test:e2e -- --list` pass (1 test); `npm run build` pass with two new dynamic reset routes.
+- Blockers: none. Email delivery is still a stub; rate limiting is deferred to M2.5; CI still skips integration tests because it has no Postgres service. Password reset does not alter admin MFA credentials, so MFA remains mandatory once M2.8 lands.
+- Next step: M2.5 — implement shared DB-backed rate limiting middleware for login/register/reset/OTP.
 
 ### 2026-11-20 — M2.3 — Email verification tokens and endpoints
 

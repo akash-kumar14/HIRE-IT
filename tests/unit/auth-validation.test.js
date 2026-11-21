@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   readJsonBody,
   validateLogin,
+  validatePasswordResetConfirm,
+  validatePasswordResetRequest,
   validateRegistration,
   validateVerificationConfirm,
   ValidationError,
@@ -85,6 +87,43 @@ describe("validateVerificationConfirm", () => {
     expect(() => validateVerificationConfirm({ token: "   " })).toThrow(
       "Verification token is required.",
     );
+  });
+});
+
+describe("validatePasswordResetRequest", () => {
+  it("returns a normalized email", () => {
+    expect(
+      validatePasswordResetRequest({ email: "  Person@Example.COM " }),
+    ).toEqual({ email: "person@example.com" });
+  });
+
+  it("rejects invalid emails and non-object bodies", () => {
+    expect(() => validatePasswordResetRequest({ email: "not-an-email" })).toThrow(
+      ValidationError,
+    );
+    expect(() => validatePasswordResetRequest([])).toThrow(
+      "Request body must be a JSON object.",
+    );
+  });
+});
+
+describe("validatePasswordResetConfirm", () => {
+  it("returns a trimmed token and the password", () => {
+    expect(
+      validatePasswordResetConfirm({
+        token: "  reset-token  ",
+        password: "NewPassword123!",
+      }),
+    ).toEqual({ token: "reset-token", password: "NewPassword123!" });
+  });
+
+  it("rejects missing tokens and weak passwords", () => {
+    expect(() => validatePasswordResetConfirm({ password: "NewPassword123!" })).toThrow(
+      "Reset token is required.",
+    );
+    expect(() =>
+      validatePasswordResetConfirm({ token: "reset-token", password: "short" }),
+    ).toThrow("Password must be between 8 and 128 characters.");
   });
 });
 
