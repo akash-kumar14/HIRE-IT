@@ -142,7 +142,8 @@ describe.skipIf(!databaseUrl)("auth routes", () => {
     const meResponse = await me(
       withCookie("http://localhost/api/v1/auth/me", token),
     );
-    expect(meResponse.status).toBe(401);
+    expect(meResponse.status).toBe(403);
+    expect((await meResponse.json()).error.code).toBe("ACCOUNT_SUSPENDED");
   });
 
   it("requires authentication for logout", async () => {

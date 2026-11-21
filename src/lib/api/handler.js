@@ -58,6 +58,13 @@ export async function handleRequest(request, handler) {
       );
     }
 
+    if (error?.code && Number.isInteger(error?.status)) {
+      return errorResponse(error.code, error.message, {
+        status: error.status,
+        requestId,
+      });
+    }
+
     return errorResponse("INTERNAL_ERROR", "Unexpected error.", {
       status: 500,
       requestId,

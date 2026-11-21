@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-21
-**Current focus:** M2.6 — Authorization core (status guard, ownership helpers)
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.5 done; M2.6 next.
+**Current focus:** M2.7 — Admin bootstrap and admin profiles
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.6 done; M2.7 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.5 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.6 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -46,7 +46,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.3 Email verification tokens and endpoints
 - [x] M2.4 Password reset (expiry, single use, session revocation)
 - [x] M2.5 Shared DB-backed rate limiting
-- [ ] M2.6 Authorization core (status guard, ownership helpers)
+- [x] M2.6 Authorization core (status guard, ownership helpers)
 - [ ] M2.7 Admin bootstrap and admin profiles
 - [ ] M2.8 TOTP MFA enroll/confirm/verify/recovery
 - [ ] M2.9 Audit log and account deletion requests
@@ -187,10 +187,20 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-21 | `npm test` (M2.5, isolated rerun) | Pass | 9 unit test files, 40 tests |
 | 2026-11-21 | `npm run test:integration` (M2.5) | Pass | 3 rate limit tests passed against Neon dev branch; 16 earlier tests passed, 1 skipped |
 | 2026-11-21 | M2.5 production build | Pass | Six auth routes compile with rate limiting; Playwright discovery unchanged |
+| 2026-11-21 | `npm test` (M2.6) | Pass | 10 unit test files, 45 tests |
+| 2026-11-21 | `npm run test:integration` (M2.6) | Pass | 5 authorization guard tests passed against Neon dev branch; 19 earlier tests passed, 1 skipped |
+| 2026-11-21 | M2.6 production build | Pass | Auth routes compile with shared session guard; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-21 — M2.6 — Authorization core
+
+- Changed: added `inspectSession` in `src/modules/auth/auth.service.js` so a valid session reports `active`, `suspended`, `deleted`, `missing`, or `anonymous` while `getCurrentSession` keeps its existing active-only contract. Added `src/modules/auth/authorization.js` with `AuthorizationError`, `AuthenticationError`, `AccountStatusError`, `ForbiddenError`, `requireAuthenticatedUser`, `assertOwnedBy`, `assertCustomerOwnsTask`, and `assertProviderOwnsOffer`. `src/lib/api/handler.js` now maps typed authorization errors to their statuses. `GET /auth/me` and `POST /auth/email-verification` use the shared guard instead of local session checks; logout remains intentionally available to any valid session holder. Updated the existing suspended-user route test to expect 403 `ACCOUNT_SUSPENDED` instead of 401.
+- Tests: `npm run lint` pass; `npm test` pass (10 files / 45 tests); `npm run test:integration` pass (24 tests passed, 1 skipped); `npm run test:e2e -- --list` pass; `npm run build` pass.
+- Blockers: none. Deleted accounts return 403 `ACCOUNT_UNAVAILABLE`; suspended accounts return 403 `ACCOUNT_SUSPENDED`; missing/invalid sessions still return 401. Admin permission checks are deferred to M2.7, and task/offer participation checks beyond direct ownership to M5.
+- Next step: M2.7 — controlled super-admin bootstrap, invite-only admin profiles, and admin authorization checks.
 
 ### 2026-11-21 — M2.5 — Shared DB-backed rate limiting
 

@@ -1,28 +1,18 @@
 import { handleRequest } from "@/lib/api/handler.js";
 import { enforceAuthRateLimit, getClientIp } from "@/lib/api/rate-limit.js";
-import { errorResponse, successResponse } from "@/lib/api/response.js";
-import { getCurrentSession } from "@/modules/auth/auth.service.js";
-import { readSessionToken } from "@/modules/auth/session-cookie.js";
+import { successResponse } from "@/lib/api/response.js";
+import { requireAuthenticatedUser } from "@/modules/auth/authorization.js";
 import { requestEmailVerification } from "@/modules/auth/verification.service.js";
 
 export async function POST(request) {
   return handleRequest(request, async ({ requestId }) => {
-    const token = readSessionToken(request);
-    const current = await getCurrentSession(token);
-
-    if (!current) {
-      return errorResponse("AUTHENTICATION_REQUIRED", "Authentication is required.", {
-        status: 401,
-        requestId,
-      });
-    }
-
+    const { user } = await requireAuthenticatedUser(request);
     await enforceAuthRateLimit({
       scope: "email_verification",
-      subject: current.session.userId,
+      subject: user.id,
       ip: getClientIp(request),
     });
-    await requestEmailVerification(current.session.userId);
+    await requestEmailVerification(user.id);
     return successResponse({ accepted: true }, { status: 202, requestId });
   });
 }
