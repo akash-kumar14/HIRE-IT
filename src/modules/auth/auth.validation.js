@@ -84,6 +84,46 @@ export function validateLogin(body) {
   };
 }
 
+export function validateVerificationConfirm(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ValidationError("Request body must be a JSON object.");
+  }
+
+  if (
+    typeof body.token !== "string" ||
+    body.token.trim().length === 0 ||
+    body.token.length > 256
+  ) {
+    throw new ValidationError("Verification token is required.");
+  }
+
+  return { token: body.token.trim() };
+}
+
+export function validatePasswordResetRequest(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ValidationError("Request body must be a JSON object.");
+  }
+
+  return { email: requireEmail(body.email) };
+}
+
+export function validatePasswordResetConfirm(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ValidationError("Request body must be a JSON object.");
+  }
+
+  if (
+    typeof body.token !== "string" ||
+    body.token.trim().length === 0 ||
+    body.token.length > 256
+  ) {
+    throw new ValidationError("Reset token is required.");
+  }
+
+  return { token: body.token.trim(), password: requirePassword(body.password) };
+}
+
 export async function readJsonBody(request) {
   try {
     return await request.json();
