@@ -124,6 +124,33 @@ export function validatePasswordResetConfirm(body) {
   return { token: body.token.trim(), password: requirePassword(body.password) };
 }
 
+export function validateMfaCode(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ValidationError("Request body must be a JSON object.");
+  }
+
+  if (typeof body.code !== "string" || !/^\d{6}$/.test(body.code.trim())) {
+    throw new ValidationError("A 6-digit authentication code is required.");
+  }
+
+  return { code: body.code.trim() };
+}
+
+export function validateMfaRecoveryCode(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ValidationError("Request body must be a JSON object.");
+  }
+
+  if (
+    typeof body.code !== "string" ||
+    !/^[a-z0-9-]{10,32}$/i.test(body.code.trim())
+  ) {
+    throw new ValidationError("A recovery code is required.");
+  }
+
+  return { code: body.code.trim() };
+}
+
 export async function readJsonBody(request) {
   try {
     return await request.json();

@@ -7,9 +7,12 @@ import {
   assertOwnedBy,
   assertProviderOwnsOffer,
   assertSuperAdmin,
+  assertMfaEnrolled,
+  assertMfaVerified,
   AuthenticationError,
   AuthorizationError,
   ForbiddenError,
+  MfaRequiredError,
 } from "@/modules/auth/authorization.js";
 
 describe("authorization errors", () => {
@@ -29,6 +32,10 @@ describe("authorization errors", () => {
     });
     expect(new AdminPermissionError()).toMatchObject({
       code: "ADMIN_ACCESS_REQUIRED",
+      status: 403,
+    });
+    expect(new MfaRequiredError()).toMatchObject({
+      code: "MFA_REQUIRED",
       status: 403,
     });
     expect(new AuthenticationError()).toBeInstanceOf(AuthorizationError);
@@ -80,6 +87,24 @@ describe("admin assertions", () => {
     expect(assertSuperAdmin(superAdmin)).toBe(superAdmin);
     expect(() => assertSuperAdmin({ id: "admin-2", role: "admin" })).toThrow(
       AdminPermissionError,
+    );
+  });
+});
+
+describe("MFA assertions", () => {
+  it("requires a confirmed credential", () => {
+    const credential = { id: "credential-1", confirmedAt: new Date() };
+    expect(assertMfaEnrolled(credential)).toBe(credential);
+    expect(() => assertMfaEnrolled({ confirmedAt: null })).toThrow(
+      MfaRequiredError,
+    );
+  });
+
+  it("requires a verified session", () => {
+    const session = { id: "session-1", mfaVerifiedAt: new Date() };
+    expect(assertMfaVerified(session)).toBe(session);
+    expect(() => assertMfaVerified({ mfaVerifiedAt: null })).toThrow(
+      MfaRequiredError,
     );
   });
 });

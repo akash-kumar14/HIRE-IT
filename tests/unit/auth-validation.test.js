@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   readJsonBody,
   validateLogin,
+  validateMfaCode,
+  validateMfaRecoveryCode,
   validatePasswordResetConfirm,
   validatePasswordResetRequest,
   validateRegistration,
@@ -124,6 +126,24 @@ describe("validatePasswordResetConfirm", () => {
     expect(() =>
       validatePasswordResetConfirm({ token: "reset-token", password: "short" }),
     ).toThrow("Password must be between 8 and 128 characters.");
+  });
+});
+
+describe("MFA validation", () => {
+  it("accepts a 6-digit code and trims it", () => {
+    expect(validateMfaCode({ code: " 123456 " })).toEqual({ code: "123456" });
+  });
+
+  it("rejects malformed codes and recovery codes", () => {
+    expect(() => validateMfaCode({ code: "12ab56" })).toThrow(ValidationError);
+    expect(() => validateMfaCode({ code: "12345" })).toThrow(ValidationError);
+    expect(() => validateMfaCode({ code: 123456 })).toThrow(ValidationError);
+    expect(() => validateMfaRecoveryCode({ code: "abc" })).toThrow(
+      ValidationError,
+    );
+    expect(() => validateMfaRecoveryCode({ code: "AAAAAAAAAAAA!" })).toThrow(
+      ValidationError,
+    );
   });
 });
 

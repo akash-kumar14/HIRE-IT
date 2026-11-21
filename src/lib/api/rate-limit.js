@@ -9,6 +9,10 @@ export const AUTH_RATE_LIMITS = {
   password_reset_confirm: { max: 10, windowMs: 10 * 60 * 1000 },
   email_verification: { max: 10, windowMs: 15 * 60 * 1000 },
   email_verification_confirm: { max: 10, windowMs: 10 * 60 * 1000 },
+  mfa_enroll: { max: 10, windowMs: 10 * 60 * 1000 },
+  mfa_confirm: { max: 10, windowMs: 10 * 60 * 1000 },
+  mfa_verify: { max: 10, windowMs: 10 * 60 * 1000 },
+  mfa_recovery: { max: 10, windowMs: 10 * 60 * 1000 },
 };
 
 export const IP_RATE_LIMIT = { max: 100, windowMs: 10 * 60 * 1000 };

@@ -37,6 +37,12 @@ export class AdminPermissionError extends AuthorizationError {
   }
 }
 
+export class MfaRequiredError extends AuthorizationError {
+  constructor() {
+    super("MFA_REQUIRED", "Multi-factor authentication is required.", 403);
+  }
+}
+
 export async function requireAuthenticatedUser(request) {
   const current = await inspectSession(readSessionToken(request));
 
@@ -94,4 +100,20 @@ export function assertSuperAdmin(adminProfile) {
   }
 
   return adminProfile;
+}
+
+export function assertMfaEnrolled(credential) {
+  if (!credential?.confirmedAt) {
+    throw new MfaRequiredError();
+  }
+
+  return credential;
+}
+
+export function assertMfaVerified(session) {
+  if (!session?.mfaVerifiedAt) {
+    throw new MfaRequiredError();
+  }
+
+  return session;
 }
