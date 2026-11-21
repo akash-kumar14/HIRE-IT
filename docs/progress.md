@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-21
-**Current focus:** M2.5 — Shared DB-backed rate limiting
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.4 done; M2.5 next.
+**Current focus:** M2.6 — Authorization core (status guard, ownership helpers)
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.5 done; M2.6 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.4 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.5 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -45,7 +45,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.2 Register/login/logout/me with secure cookies
 - [x] M2.3 Email verification tokens and endpoints
 - [x] M2.4 Password reset (expiry, single use, session revocation)
-- [ ] M2.5 Shared DB-backed rate limiting
+- [x] M2.5 Shared DB-backed rate limiting
 - [ ] M2.6 Authorization core (status guard, ownership helpers)
 - [ ] M2.7 Admin bootstrap and admin profiles
 - [ ] M2.8 TOTP MFA enroll/confirm/verify/recovery
@@ -181,10 +181,23 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-21 | `npm test` (M2.4) | Pass | 8 unit test files, 34 tests; password reset request/confirm validation covered |
 | 2026-11-21 | `npm run test:integration` (M2.4) | Pass | 4 password reset tests passed against Neon dev branch; 12 earlier tests passed, 1 skipped |
 | 2026-11-21 | M2.4 production build | Pass | Two new `/api/v1/auth/password-reset*` routes compile as dynamic routes; Playwright discovery unchanged |
+| 2026-11-21 | `npx drizzle-kit check` | Pass | Journal and snapshots consistent through `0003_rate_limit_counters` |
+| 2026-11-21 | `npm run db:migrate` | Pass | 0003 applied to Neon dev branch; `rate_limit_counters` and indexes created |
+| 2026-11-21 | `npm test` (M2.5, parallel run) | Fail | bcrypt unit test timed out at 5s under concurrent lint/drizzle/migration load; no code change |
+| 2026-11-21 | `npm test` (M2.5, isolated rerun) | Pass | 9 unit test files, 40 tests |
+| 2026-11-21 | `npm run test:integration` (M2.5) | Pass | 3 rate limit tests passed against Neon dev branch; 16 earlier tests passed, 1 skipped |
+| 2026-11-21 | M2.5 production build | Pass | Six auth routes compile with rate limiting; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-21 — M2.5 — Shared DB-backed rate limiting
+
+- Changed: added `src/lib/db/schema/rate-limits.js` with `rate_limit_counters` (scope, subject, `window_start`, count, unique index on all three plus a window-start index), re-exported from the schema index, and generated `drizzle/0003_rate_limit_counters.sql` with a reviewed `.down.sql`. Added `src/lib/api/rate-limit.js` with endpoint-specific limits, fixed-window math, atomic `ON CONFLICT` increments, client-IP extraction, and `RateLimitError`; `handler.js` maps it to a sanitized 429 with `Retry-After`. Wired per-subject and per-IP checks into register, login, password-reset request/confirm, and email-verification request/confirm routes. Added unit tests for windows, evaluation, IP parsing, config, and errors plus integration tests for counter semantics, route 429, and validation bypass.
+- Tests: `npx drizzle-kit check` pass; `npm run db:migrate` pass on Neon dev branch; `npm run lint` pass; `npm test` pass when isolated (9 files / 40 tests — one bcrypt test timed out in a parallel run from load, no code change); `npm run test:integration` pass (19 tests passed, 1 skipped); `npm run test:e2e -- --list` pass; `npm run build` pass.
+- Blockers: none. Counters are fixed-window and need periodic cleanup (deferred to M9 job work); OTP/MFA endpoints do not exist yet and will reuse this middleware in M2.8/M7.1. Down migration SQL was authored and reviewed but not executed against the shared dev branch.
+- Next step: M2.6 — build the authorization core (account-status guard and resource-ownership helpers) with policy tests.
 
 ### 2026-11-21 — M2.4 — Password reset
 
