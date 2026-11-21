@@ -99,7 +99,12 @@ export const adminProfiles = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [uniqueIndex("admin_profiles_user_unique").on(table.userId)],
+  (table) => [
+    uniqueIndex("admin_profiles_user_unique").on(table.userId),
+    uniqueIndex("admin_profiles_single_super_admin_unique")
+      .on(table.role)
+      .where(sql`${table.role} = 'super_admin'`),
+  ],
 );
 
 export const adminMfaCredentials = pgTable(

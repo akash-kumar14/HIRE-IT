@@ -29,6 +29,13 @@
       "when": 1795271720907,
       "tag": "0003_rate_limit_counters",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795272985278,
+      "tag": "0004_admin_super_admin_unique",
+      "breakpoints": true
     }
   ]
 }
