@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-22
-**Current focus:** M2.10 — M2 tests (positive and negative paths)
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.9 done; M2.10 next.
+**Current focus:** M2.11 — UI shell (route groups, nav, session guard, responsive tokens)
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.10 done; M2.11 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.9 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.10 done; UI phases M2.11–M2.13 remain |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -50,7 +50,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.7 Admin bootstrap and admin profiles
 - [x] M2.8 TOTP MFA enroll/confirm/verify/recovery
 - [x] M2.9 Audit log and account deletion requests
-- [ ] M2.10 M2 tests (positive and negative paths)
+- [x] M2.10 M2 tests (positive and negative paths)
 - [ ] M2.11 UI shell (route groups, nav, session guard, responsive tokens)
 - [ ] M2.12 Auth screens (register/login/logout/me, verification, reset)
 - [ ] M2.13 Admin MFA screens (enroll/confirm/verify/recovery)
@@ -209,10 +209,23 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-22 | `npm run test:integration` (M2.9, targeted) | Pass | 3 audit/deletion tests passed against Neon dev branch; request uniqueness, status read, and MFA audit covered |
 | 2026-11-22 | `npm run test:integration` (M2.9, full suite) | Pass | 33 tests passed, 1 skipped against Neon dev branch; admin/MFA regression paths included |
 | 2026-11-22 | M2.9 production build | Pass | Two new `/api/v1/account/deletion-requests*` routes compile as dynamic routes; Playwright discovery unchanged |
+| 2026-11-22 | `npm test` (M2.10, first run) | Fail | New handler test used `req-123`, which fails the request ID pattern; no production code change |
+| 2026-11-22 | `npm test` (M2.10, rerun) | Pass | 14 unit test files, 67 tests; handler error mapping, MFA rate-limit scopes, and deletion reason validation covered |
+| 2026-11-22 | `npm run test:integration` (M2.10, first run) | Fail | New MFA audit test passed a promise from `generate()` instead of awaiting the TOTP string; no production code change |
+| 2026-11-22 | `npm run test:integration` (M2.10, targeted) | Pass | 6 M2 negative-path tests passed against Neon dev branch after awaiting TOTP generation |
+| 2026-11-22 | `npm run test:integration` (M2.10, full suite) | Pass | 39 tests passed, 1 skipped against Neon dev branch; M2.9 regression paths included |
+| 2026-11-22 | M2.10 lint, Playwright list, and production build | Pass | `npm run lint`, `npm run test:e2e -- --list`, and `npm run build` pass; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-22 — M2.10 — M2 positive and negative tests
+
+- Changed: created `feat/m2.10-m2-tests` from `origin/main` after M2.9 was merged. Added `tests/unit/handler.test.js` for 422 validation, duplicate-email 409 mapping, typed authorization error pass-through, and 500 sanitization; added MFA scopes to `tests/unit/rate-limit.test.js`; added deletion reason type/whitespace cases to `tests/unit/audit-deletion.test.js`. Added `tests/integration/m2-negative-paths.test.js` covering non-admin MFA route rejection, account-status checks before MFA setup, failed/successful MFA verify audit behavior, unauthenticated deletion endpoints, cross-user deletion status isolation, reason-free audit metadata, duplicate deletion no extra audit, and denied admin invitation with no audit row. No production code changed.
+- Tests: `npm run lint` pass; `npm test` pass after rerun (14 files / 67 tests); targeted `npm run test:integration` pass (6 negative-path tests); full `npm run test:integration` pass (39 tests passed, 1 skipped) against Neon dev branch; `npm run test:e2e -- --list` pass; `npm run build` pass. First unit run failed because the test request ID was shorter than the configured 8-character minimum; first integration run failed because TOTP generation was not awaited. Both were test-only fixes.
+- Blockers: none. CI still has no `DATABASE_URL`, so integration tests remain skipped there by design; local Neon runs cover the DB paths.
+- Next step: M2.11 — build the UI shell with route groups, navigation, session guard, and responsive design tokens.
 
 ### 2026-11-22 — M2.9 — Audit log and account deletion requests
 

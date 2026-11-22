@@ -64,6 +64,10 @@ describe("rate limit configuration", () => {
       "password_reset_confirm",
       "email_verification",
       "email_verification_confirm",
+      "mfa_enroll",
+      "mfa_confirm",
+      "mfa_verify",
+      "mfa_recovery",
     ]) {
       expect(AUTH_RATE_LIMITS[scope].max).toBeGreaterThan(0);
       expect(AUTH_RATE_LIMITS[scope].windowMs).toBeGreaterThan(0);
