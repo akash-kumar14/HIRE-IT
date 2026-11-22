@@ -2,16 +2,16 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-21
-**Current focus:** M2.8 — TOTP MFA enroll/confirm/verify/recovery
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.7 done; M2.8 next.
+**Last updated:** 2026-11-22
+**Current focus:** M2.9 — Audit log and account deletion requests
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.8 done; M2.9 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.7 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.8 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -48,7 +48,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.5 Shared DB-backed rate limiting
 - [x] M2.6 Authorization core (status guard, ownership helpers)
 - [x] M2.7 Admin bootstrap and admin profiles
-- [ ] M2.8 TOTP MFA enroll/confirm/verify/recovery
+- [x] M2.8 TOTP MFA enroll/confirm/verify/recovery
 - [ ] M2.9 Audit log and account deletion requests
 - [ ] M2.10 M2 tests (positive and negative paths)
 - [ ] M2.11 UI shell (route groups, nav, session guard, responsive tokens)
@@ -197,10 +197,32 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-21 | `npm run test:integration` (M2.7, rerun) | Pass | 3 admin tests passed against Neon dev branch; 24 earlier tests passed, 1 skipped |
 | 2026-11-21 | `npm run admin:bootstrap` guard check | Pass | Refuses to run without `ADMIN_BOOTSTRAP_CONFIRM=1`; no DB changes |
 | 2026-11-21 | M2.7 production build | Pass | Node alias loader and CLI script added; Playwright discovery unchanged |
+| 2026-11-21 | `npx drizzle-kit check` | Pass | Journal and snapshots consistent through `0005_session_mfa_verified_at` |
+| 2026-11-21 | `npm run db:migrate` | Pass | 0005 applied to Neon dev branch; `user_sessions.mfa_verified_at` added |
+| 2026-11-21 | `npm test` (M2.8) | Pass | 12 unit test files, 57 tests |
+| 2026-11-21 | `npm run test:integration` (M2.8, first run) | Fail | Admin bootstrap test raced with MFA test inserting a profile; MFA tests exceeded 20s from Neon transaction latency |
+| 2026-11-21 | `npm run test:integration` (M2.8, rerun) | Pass | 3 MFA tests passed against Neon dev branch with serial files and 60s MFA timeouts; 27 earlier tests passed, 1 skipped |
+| 2026-11-21 | M2.8 production build | Pass | Four MFA routes compile as dynamic routes; Playwright discovery unchanged |
+| 2026-11-22 | `npm ci` with npm 10 (CI parity) | Pass (after fix) | Initial failure: lockfile produced by npm 11 lacked nested `esbuild@0.28.2` peer entries required by npm 10; regenerated lock with npm 10 on Node 20 |
+| 2026-11-22 | Full CI sequence | Pass | `npm ci` parity, `npm run lint`, `npm test` (12 files / 57 tests), integration in CI-like no-DB env (31 skipped), Playwright list, and `npm run build` all pass |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-22 — M2.8 merge — CI dependency error
+
+- Changed: regenerated `package-lock.json` with npm 10 on Node 20 after adding `otplib`; added the nested `vitest/node_modules/esbuild@0.28.2` and `@esbuild/*` peer entries that npm 11 omitted. No application code changed. Recorded that the local `main` ref was stale (at `cbd9e76`) while `origin/main` included M2.2–M2.7; compared against `origin/main` instead.
+- Tests: `npm ci --dry-run` with npm 10 / Node 20 pass after fix (failed before with `Missing: esbuild@0.28.2 from lock file`); `npm run lint` pass; `npm test` pass (12 files / 57 tests); `npm run test:integration` pass in a CI-like copy without `.env` (31 DB tests skipped); `npm run test:e2e -- --list` pass; `npm run build` pass.
+- Blockers: none for CI install. Local integration runs are slow because the untracked `.env` points at Neon; CI has no `DATABASE_URL` and skips them by design. Regenerate this lockfile with npm 10 (or run `npm ci` on Node 20) whenever dependencies change, since npm 11 writes an npm 10-incompatible lock tree.
+- Next step: push the regenerated `package-lock.json` to the M2.8 PR, rerun `ci/verify`, then merge and start M2.9 — audit logging and account deletion requests.
+
+### 2026-11-21 — M2.8 — Admin TOTP MFA
+
+- Changed: added `otplib` dependency, migration `drizzle/0005_session_mfa_verified_at.sql` with a reviewed `.down.sql`, and `src/modules/auth/mfa-crypto.js` (AES-256-GCM secret encryption keyed from `SESSION_SECRET`, SHA-256 recovery-code hashes, one-time code formatting). Added `src/modules/auth/mfa.service.js` with enroll/confirm/verify/recover, encrypted secret storage, single-use recovery codes, and transactional updates to `admin_mfa_credentials`, `admin_profiles`, and `user_sessions`. Added `MfaRequiredError`, `assertMfaEnrolled`, and `assertMfaVerified` to the authorization core, plus `requireMfaAdminProfile` for future admin endpoints; `requireAdminProfile` remains for MFA setup. Added `POST /auth/mfa/enroll`, `/confirm`, `/verify`, and `/recovery` with validation and rate limits. Password reset still revokes all sessions, so a new email/password session cannot access admin endpoints until TOTP or a recovery code is supplied.
+- Tests: `npx drizzle-kit check` pass; `npm run db:migrate` pass on Neon dev branch; `npm run lint` pass; `npm test` pass (12 files / 57 tests); `npm run test:integration` pass after rerun (30 tests passed, 1 skipped); `npm run test:e2e -- --list` pass; `npm run build` pass.
+- Blockers: none. The first integration run failed because integration files ran in parallel against shared global state (single super-admin constraint) and because Neon transaction latency exceeded the 20s default; integration files now run serially and the three MFA tests allow 60s. `SESSION_SECRET` is absent from the local `.env`, so MFA tests use a test-only value; production env validation already requires it. No audit log is written for MFA yet (M2.9).
+- Next step: M2.9 — audit logging for privileged actions and account deletion request endpoints.
 
 ### 2026-11-21 — M2.7 — Admin bootstrap and profiles
 
