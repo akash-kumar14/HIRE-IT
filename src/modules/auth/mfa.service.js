@@ -7,6 +7,10 @@ import {
   userSessions,
 } from "@/lib/db/schema/users.js";
 import {
+  AUDIT_ACTIONS,
+  recordAdminAction,
+} from "@/modules/audit/audit.service.js";
+import {
   decryptTotpSecret,
   encryptTotpSecret,
   generateRecoveryCodes,
@@ -82,17 +86,36 @@ export async function enrollMfa(input, options = {}) {
     lastUsedAt: null,
   };
 
-  if (existing) {
-    await database
-      .update(adminMfaCredentials)
-      .set(values)
-      .where(eq(adminMfaCredentials.id, existing.id));
-  } else {
-    await database.insert(adminMfaCredentials).values({
-      adminProfileId: input.adminProfileId,
-      ...values,
-    });
-  }
+  let credentialId = existing?.id ?? null;
+
+  await database.transaction(async (tx) => {
+    if (existing) {
+      await tx
+        .update(adminMfaCredentials)
+        .set(values)
+        .where(eq(adminMfaCredentials.id, existing.id));
+    } else {
+      const [credential] = await tx
+        .insert(adminMfaCredentials)
+        .values({
+          adminProfileId: input.adminProfileId,
+          ...values,
+        })
+        .returning({ id: adminMfaCredentials.id });
+      credentialId = credential.id;
+    }
+
+    await recordAdminAction(
+      {
+        adminProfileId: input.adminProfileId,
+        action: AUDIT_ACTIONS.MFA_ENROLL,
+        entityType: "admin_mfa_credential",
+        entityId: credentialId,
+        metadata: { rotated: Boolean(existing) },
+      },
+      { database: tx },
+    );
+  });
 
   return {
     secret,
@@ -137,6 +160,16 @@ export async function confirmMfa(input, options = {}) {
       .update(adminProfiles)
       .set({ mfaEnrolledAt: now })
       .where(eq(adminProfiles.id, input.adminProfileId));
+
+    await recordAdminAction(
+      {
+        adminProfileId: input.adminProfileId,
+        action: AUDIT_ACTIONS.MFA_CONFIRM,
+        entityType: "admin_mfa_credential",
+        entityId: credential.id,
+      },
+      { database: tx },
+    );
   });
 
   return { recoveryCodes, confirmedAt: now };
@@ -171,6 +204,16 @@ export async function verifyMfa(input, options = {}) {
     if (!session) {
       throw new Error("Session is no longer active.");
     }
+
+    await recordAdminAction(
+      {
+        adminProfileId: input.adminProfileId,
+        action: AUDIT_ACTIONS.MFA_VERIFY,
+        entityType: "user_session",
+        entityId: session.id,
+      },
+      { database: tx },
+    );
   });
 
   return { verified: true };
@@ -214,6 +257,16 @@ export async function recoverMfa(input, options = {}) {
     if (!session) {
       throw new Error("Session is no longer active.");
     }
+
+    await recordAdminAction(
+      {
+        adminProfileId: input.adminProfileId,
+        action: AUDIT_ACTIONS.MFA_RECOVERY,
+        entityType: "user_session",
+        entityId: session.id,
+      },
+      { database: tx },
+    );
   });
 
   return { verified: true };
