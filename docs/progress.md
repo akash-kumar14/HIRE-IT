@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-22
-**Current focus:** M2.9 — Audit log and account deletion requests
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.8 done; M2.9 next.
+**Current focus:** M2.10 — M2 tests (positive and negative paths)
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.9 done; M2.10 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.8 done; UI phases M2.11–M2.13 start after M2.10 |
+| M2 | Authentication and authorization | In progress | M2.1–M2.9 done; UI phases M2.11–M2.13 start after M2.10 |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -49,7 +49,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.6 Authorization core (status guard, ownership helpers)
 - [x] M2.7 Admin bootstrap and admin profiles
 - [x] M2.8 TOTP MFA enroll/confirm/verify/recovery
-- [ ] M2.9 Audit log and account deletion requests
+- [x] M2.9 Audit log and account deletion requests
 - [ ] M2.10 M2 tests (positive and negative paths)
 - [ ] M2.11 UI shell (route groups, nav, session guard, responsive tokens)
 - [ ] M2.12 Auth screens (register/login/logout/me, verification, reset)
@@ -205,10 +205,21 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-21 | M2.8 production build | Pass | Four MFA routes compile as dynamic routes; Playwright discovery unchanged |
 | 2026-11-22 | `npm ci` with npm 10 (CI parity) | Pass (after fix) | Initial failure: lockfile produced by npm 11 lacked nested `esbuild@0.28.2` peer entries required by npm 10; regenerated lock with npm 10 on Node 20 |
 | 2026-11-22 | Full CI sequence | Pass | `npm ci` parity, `npm run lint`, `npm test` (12 files / 57 tests), integration in CI-like no-DB env (31 skipped), Playwright list, and `npm run build` all pass |
+| 2026-11-22 | `npm test` (M2.9) | Pass | 13 unit test files, 63 tests; deletion validation, public mapping, and audit event fields covered |
+| 2026-11-22 | `npm run test:integration` (M2.9, targeted) | Pass | 3 audit/deletion tests passed against Neon dev branch; request uniqueness, status read, and MFA audit covered |
+| 2026-11-22 | `npm run test:integration` (M2.9, full suite) | Pass | 33 tests passed, 1 skipped against Neon dev branch; admin/MFA regression paths included |
+| 2026-11-22 | M2.9 production build | Pass | Two new `/api/v1/account/deletion-requests*` routes compile as dynamic routes; Playwright discovery unchanged |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-22 — M2.9 — Audit log and account deletion requests
+
+- Changed: created `feat/m2.9-audit-deletion` from `origin/main` after M2.8 was merged. Added `src/modules/audit/audit.service.js` with a shared `recordAuditEvent` and an admin-actor helper, plus action constants for admin bootstrap/invite, MFA enroll/confirm/verify/recovery, and deletion requests. Added `src/modules/users/deletion.service.js` with one-pending-request enforcement, public status mapping, and an atomic audit write. Added `POST /api/v1/account/deletion-requests` (201, optional trimmed reason, 409 `DELETION_REQUEST_PENDING`) and `GET /api/v1/account/deletion-requests/current` (latest request or `null`). Wrote audit events inside the existing admin bootstrap/invite and MFA service transactions; no secrets, codes, or reason text enter audit metadata. Extended auth validation with an optional JSON body and deletion reason rules. No schema or migration change was needed; the M1.4 tables already exist.
+- Tests: `npm run lint` pass; `npm test` pass (13 files / 63 tests); targeted `npm run test:integration` pass (3 audit/deletion tests); full `npm run test:integration` pass (33 tests passed, 1 skipped) against Neon dev branch; `npm run test:e2e -- --list` pass; `npm run build` pass.
+- Blockers: none. Audit events for MFA and admin actions are written with a nullable `request_id` because services do not receive HTTP context; deletion-request events include the request ID. No admin audit-read endpoint exists because the API specification defines none; no account data is deleted by the request, only queued for later review. Historical M2.8 note saying MFA is unaudited is superseded by this phase.
+- Next step: M2.10 — expand M2 positive/negative tests across authorization, recovery, deletion, and audit paths.
 
 ### 2026-11-22 — M2.8 merge — CI dependency error
 

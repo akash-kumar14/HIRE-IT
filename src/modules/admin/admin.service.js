@@ -1,6 +1,10 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client.js";
 import { adminProfiles } from "@/lib/db/schema/users.js";
+import {
+  AUDIT_ACTIONS,
+  recordAuditEvent,
+} from "@/modules/audit/audit.service.js";
 import { assertSuperAdmin } from "@/modules/auth/authorization.js";
 import { findUserByEmail, findUserById } from "@/modules/users/users.service.js";
 
@@ -92,14 +96,29 @@ export async function bootstrapInitialSuperAdmin(input, options = {}) {
   }
 
   try {
-    const [profile] = await database
-      .insert(adminProfiles)
-      .values({
-        userId: user.id,
-        role: "super_admin",
-        createdByUserId: null,
-      })
-      .returning();
+    const profile = await database.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(adminProfiles)
+        .values({
+          userId: user.id,
+          role: "super_admin",
+          createdByUserId: null,
+        })
+        .returning();
+
+      await recordAuditEvent(
+        {
+          actorUserId: user.id,
+          action: AUDIT_ACTIONS.ADMIN_BOOTSTRAP,
+          entityType: "admin_profile",
+          entityId: created.id,
+          metadata: { role: "super_admin" },
+        },
+        { database: tx },
+      );
+
+      return created;
+    });
 
     return toPublicAdminProfile(profile);
   } catch (error) {
@@ -138,14 +157,30 @@ export async function inviteAdmin(input, options = {}) {
   }
 
   try {
-    const [profile] = await database
-      .insert(adminProfiles)
-      .values({
-        userId: user.id,
-        role: "admin",
-        createdByUserId: actor.userId,
-      })
-      .returning();
+    const profile = await database.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(adminProfiles)
+        .values({
+          userId: user.id,
+          role: "admin",
+          createdByUserId: actor.userId,
+        })
+        .returning();
+
+      await recordAuditEvent(
+        {
+          actorUserId: actor.userId,
+          actorAdminProfileId: actor.id,
+          action: AUDIT_ACTIONS.ADMIN_INVITE,
+          entityType: "admin_profile",
+          entityId: created.id,
+          metadata: { role: "admin" },
+        },
+        { database: tx },
+      );
+
+      return created;
+    });
 
     return toPublicAdminProfile(profile);
   } catch (error) {

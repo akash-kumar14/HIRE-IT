@@ -151,9 +151,43 @@ export function validateMfaRecoveryCode(body) {
   return { code: body.code.trim() };
 }
 
+export function validateDeletionRequest(body) {
+  if (body === null || body === undefined) {
+    return { reason: null };
+  }
+
+  if (typeof body !== "object" || Array.isArray(body)) {
+    throw new ValidationError("Request body must be a JSON object.");
+  }
+
+  if (body.reason === undefined || body.reason === null || body.reason === "") {
+    return { reason: null };
+  }
+
+  if (typeof body.reason !== "string" || body.reason.trim().length > 500) {
+    throw new ValidationError("Reason must be at most 500 characters.");
+  }
+
+  return { reason: body.reason.trim() || null };
+}
+
 export async function readJsonBody(request) {
   try {
     return await request.json();
+  } catch {
+    throw new ValidationError("Request body must be valid JSON.");
+  }
+}
+
+export async function readOptionalJsonBody(request) {
+  const text = await request.text();
+
+  if (!text.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text);
   } catch {
     throw new ValidationError("Request body must be valid JSON.");
   }
