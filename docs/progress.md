@@ -2,7 +2,7 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-21
+**Last updated:** 2026-11-22
 **Current focus:** M2.9 — Audit log and account deletion requests
 **Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.8 done; M2.9 next.
 
@@ -203,10 +203,19 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-21 | `npm run test:integration` (M2.8, first run) | Fail | Admin bootstrap test raced with MFA test inserting a profile; MFA tests exceeded 20s from Neon transaction latency |
 | 2026-11-21 | `npm run test:integration` (M2.8, rerun) | Pass | 3 MFA tests passed against Neon dev branch with serial files and 60s MFA timeouts; 27 earlier tests passed, 1 skipped |
 | 2026-11-21 | M2.8 production build | Pass | Four MFA routes compile as dynamic routes; Playwright discovery unchanged |
+| 2026-11-22 | `npm ci` with npm 10 (CI parity) | Pass (after fix) | Initial failure: lockfile produced by npm 11 lacked nested `esbuild@0.28.2` peer entries required by npm 10; regenerated lock with npm 10 on Node 20 |
+| 2026-11-22 | Full CI sequence | Pass | `npm ci` parity, `npm run lint`, `npm test` (12 files / 57 tests), integration in CI-like no-DB env (31 skipped), Playwright list, and `npm run build` all pass |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-22 — M2.8 merge — CI dependency error
+
+- Changed: regenerated `package-lock.json` with npm 10 on Node 20 after adding `otplib`; added the nested `vitest/node_modules/esbuild@0.28.2` and `@esbuild/*` peer entries that npm 11 omitted. No application code changed. Recorded that the local `main` ref was stale (at `cbd9e76`) while `origin/main` included M2.2–M2.7; compared against `origin/main` instead.
+- Tests: `npm ci --dry-run` with npm 10 / Node 20 pass after fix (failed before with `Missing: esbuild@0.28.2 from lock file`); `npm run lint` pass; `npm test` pass (12 files / 57 tests); `npm run test:integration` pass in a CI-like copy without `.env` (31 DB tests skipped); `npm run test:e2e -- --list` pass; `npm run build` pass.
+- Blockers: none for CI install. Local integration runs are slow because the untracked `.env` points at Neon; CI has no `DATABASE_URL` and skips them by design. Regenerate this lockfile with npm 10 (or run `npm ci` on Node 20) whenever dependencies change, since npm 11 writes an npm 10-incompatible lock tree.
+- Next step: push the regenerated `package-lock.json` to the M2.8 PR, rerun `ci/verify`, then merge and start M2.9 — audit logging and account deletion requests.
 
 ### 2026-11-21 — M2.8 — Admin TOTP MFA
 
