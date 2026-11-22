@@ -40,6 +40,10 @@ describe("deletion request validation", () => {
     expect(() => validateDeletionRequest({ reason: "x".repeat(501) })).toThrow(
       "Reason must be at most 500 characters.",
     );
+    expect(() => validateDeletionRequest({ reason: 42 })).toThrow(
+      "Reason must be at most 500 characters.",
+    );
+    expect(validateDeletionRequest({ reason: "   " })).toEqual({ reason: null });
   });
 
   it("exposes only public request fields", () => {
