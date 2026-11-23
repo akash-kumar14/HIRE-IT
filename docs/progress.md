@@ -3,15 +3,15 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-23
-**Current focus:** M2.12 — Auth screens (register/login/logout/me, verification, reset)
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.11 done; M2.12 next.
+**Current focus:** M2.13 — Admin MFA screens (enroll/confirm/verify/recovery)
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.12 done; M2.13 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.11 done; UI phases M2.12–M2.13 remain |
+| M2 | Authentication and authorization | In progress | M2.1–M2.12 done; M2.13 remains |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -52,7 +52,9 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.9 Audit log and account deletion requests
 - [x] M2.10 M2 tests (positive and negative paths)
 - [x] M2.11 UI shell (route groups, nav, session guard, responsive tokens)
-- [ ] M2.12 Auth screens (register/login/logout/me, verification, reset)
+- [x] M2.12 Auth screens (split into M2.12a / M2.12b)
+  - [x] M2.12a Login, register, logout, and current profile screens
+  - [x] M2.12b Email verification and password reset screens
 - [ ] M2.13 Admin MFA screens (enroll/confirm/verify/recovery)
 
 ### M3 — Provider applications and verification
@@ -222,10 +224,34 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-23 | `npm run test:integration` (M2.11, rerun) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 251.6s with a 600s timeout |
 | 2026-11-23 | `npm run build` (M2.11) | Pass | `/dashboard`, `/provider/dashboard`, and `/admin` compile as dynamic routes |
 | 2026-11-23 | `npm run test:e2e -- --list` (M2.11) | Pass | 1 Playwright health smoke test discovered; browsers not installed locally |
+| 2026-11-23 | `npm run lint` (M2.12a) | Pass | 0 errors, 0 warnings |
+| 2026-11-23 | `npm test` (M2.12a) | Pass | 16 unit test files, 78 tests; safe redirect, envelope errors, and JSON posting covered |
+| 2026-11-23 | `npm run test:integration` (M2.12a) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 232s with a 600s timeout |
+| 2026-11-23 | `npm run build` (M2.12a) | Pass | `/login`, `/register`, `/logout`, and `/me` compile alongside the shell routes |
+| 2026-11-23 | `npm run test:e2e -- --list` (M2.12a) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-23 | `npm run lint` (M2.12b) | Pass | 0 errors, 0 warnings |
+| 2026-11-23 | `npm test` (M2.12b) | Pass | 16 unit test files, 81 tests; query token parsing covered |
+| 2026-11-23 | `npm run test:integration` (M2.12b) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 237s with a 600s timeout |
+| 2026-11-23 | `npm run build` (M2.12b) | Pass | `/verify-email`, `/password-reset`, and `/password-reset/confirm` added to the route list |
+| 2026-11-23 | `npm run test:e2e -- --list` (M2.12b) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-23 — M2.12b — Auth screens: verification and reset
+
+- Changed: continued on `feat/m2.12a-auth-screens` because M2.12a remained uncommitted. Added shared `src/components/auth/form-ui.js` and `src/components/auth/verification-forms.js` with request/confirm flows for email verification and password reset. Added `src/app/(auth)/verify-email/page.js`, `src/app/(auth)/password-reset/page.js`, and `src/app/(auth)/password-reset/confirm/page.js`, with token-aware confirm screens. Added `readSearchParam()` to `src/lib/ui/auth-forms.js` and coverage in `tests/unit/auth-forms.test.js`. Updated `src/components/auth/account-forms.js` with a password-reset link and `src/app/(customer)/me/page.js` with a verification link for unverified accounts. Reused shared form primitives in the existing account forms. No new API routes or spec decisions were added.
+- Tests: `npm run lint` pass; `npm test` pass (16 files / 81 tests); `npm run test:integration` pass (39 passed, 1 skipped) against Neon dev branch in 237s; `npm run build` pass with `/verify-email`, `/password-reset`, and `/password-reset/confirm`; `npm run test:e2e -- --list` pass (1 health smoke test, browsers still not installed locally).
+- Blockers: none. The branch still contains uncommitted M2.12a and M2.12b work and depends on `feat/m2.11-ui-shell`; merge M2.11 first. No commit was made on this phase branch.
+- Next step: M2.13 — build admin MFA enroll/confirm/verify/recovery screens using the existing endpoints.
+
+### 2026-11-23 — M2.12a — Auth screens: account access
+
+- Changed: created `feat/m2.12a-auth-screens` from `feat/m2.11-ui-shell` because M2.11 has not merged yet, and split M2.12 into M2.12a (account access) and M2.12b (verification/reset) in this file. Added `src/lib/ui/auth-forms.js` with safe `next`-path resolution, API envelope error extraction, and JSON posting. Added `src/components/auth/account-forms.js` with client `LoginForm`, `RegisterForm`, and `LogoutForm` using the existing auth endpoints. Added `src/app/(auth)/layout.js`, `src/app/(auth)/login/page.js`, `src/app/(auth)/register/page.js`, `src/app/(auth)/logout/page.js`, and `src/app/(customer)/me/page.js`. Updated `src/app/page.js` with links to sign in/registration and `src/components/app-shell.js` with a sign-out link for authenticated users. Added `tests/unit/auth-forms.test.js`. No new API routes or spec decisions were added.
+- Tests: `npm run lint` pass; `npm test` pass (16 files / 78 tests); `npm run test:integration` pass (39 passed, 1 skipped) against Neon dev branch in 232s; `npm run build` pass with `/login`, `/register`, `/logout`, and `/me`; `npm run test:e2e -- --list` pass (1 health smoke test, browsers still not installed locally).
+- Blockers: none. M2.12b screens remain for email verification and password reset. This branch depends on `feat/m2.11-ui-shell`; merge M2.11 first. No commit was made on this phase branch.
+- Next step: M2.12b — build email verification request/confirm and password reset request/confirm screens using the existing endpoints.
 
 ### 2026-11-23 — M2.11 — UI shell
 
