@@ -26,7 +26,14 @@ export function AppShell({ area = "public", user, children }) {
               ))}
             </ul>
           </nav>
-          <p className="text-sm text-ink-muted sm:text-right">{label}</p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-ink-muted sm:text-right">{label}</p>
+            {user ? (
+              <Link href="/logout" className="text-sm font-medium text-brand">
+                Sign out
+              </Link>
+            ) : null}
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
