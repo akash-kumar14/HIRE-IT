@@ -2,16 +2,16 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-22
-**Current focus:** M2.11 — UI shell (route groups, nav, session guard, responsive tokens)
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.10 done; M2.11 next.
+**Last updated:** 2026-11-23
+**Current focus:** M2.12 — Auth screens (register/login/logout/me, verification, reset)
+**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.11 done; M2.12 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.10 done; UI phases M2.11–M2.13 remain |
+| M2 | Authentication and authorization | In progress | M2.1–M2.11 done; UI phases M2.12–M2.13 remain |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -51,7 +51,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.8 TOTP MFA enroll/confirm/verify/recovery
 - [x] M2.9 Audit log and account deletion requests
 - [x] M2.10 M2 tests (positive and negative paths)
-- [ ] M2.11 UI shell (route groups, nav, session guard, responsive tokens)
+- [x] M2.11 UI shell (route groups, nav, session guard, responsive tokens)
 - [ ] M2.12 Auth screens (register/login/logout/me, verification, reset)
 - [ ] M2.13 Admin MFA screens (enroll/confirm/verify/recovery)
 
@@ -127,6 +127,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - `npm audit` reports 0 production vulnerabilities; 4 moderate dev-only advisories (esbuild via `drizzle-kit` / `@esbuild-kit` loader).
 - ADR-113 geographic matching choice open (PostGIS vs numeric + haversine).
 - Vendor checks pending: Vercel plan, Neon PostGIS availability, Gemini terms/quotas, R2, Resend, Sentry.
+- Integration suite takes about four minutes against the Neon dev branch; use a 600s command timeout.
 
 ## Test status
 
@@ -215,10 +216,23 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-22 | `npm run test:integration` (M2.10, targeted) | Pass | 6 M2 negative-path tests passed against Neon dev branch after awaiting TOTP generation |
 | 2026-11-22 | `npm run test:integration` (M2.10, full suite) | Pass | 39 tests passed, 1 skipped against Neon dev branch; M2.9 regression paths included |
 | 2026-11-22 | M2.10 lint, Playwright list, and production build | Pass | `npm run lint`, `npm run test:e2e -- --list`, and `npm run build` pass; Playwright discovery unchanged |
+| 2026-11-23 | `npm run lint` (M2.11) | Pass | 0 errors, 0 warnings |
+| 2026-11-23 | `npm test` (M2.11) | Pass | 15 unit test files, 73 tests; shell navigation and session guard mapping covered |
+| 2026-11-23 | `npm run test:integration` (M2.11, first run) | Timeout | Hit the 180s command timeout; no code change |
+| 2026-11-23 | `npm run test:integration` (M2.11, rerun) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 251.6s with a 600s timeout |
+| 2026-11-23 | `npm run build` (M2.11) | Pass | `/dashboard`, `/provider/dashboard`, and `/admin` compile as dynamic routes |
+| 2026-11-23 | `npm run test:e2e -- --list` (M2.11) | Pass | 1 Playwright health smoke test discovered; browsers not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-23 — M2.11 — UI shell
+
+- Changed: created `feat/m2.11-ui-shell` from `origin/main`. Added `src/components/app-shell.js` with a shared responsive header/nav/main/footer using existing CSS design tokens, and `src/lib/ui/navigation.js` with per-area links. Added `src/lib/ui/session-guard.js` with an async cookie adapter over the existing auth services; customer/provider layouts require an active session and the admin layout requires an MFA-verified admin profile, redirecting unauthenticated visitors to `/login` and other authorization failures to `/`. Added `src/app/(customer)/layout.js`, `src/app/(customer)/dashboard/page.js`, `src/app/(provider)/layout.js`, `src/app/(provider)/provider/dashboard/page.js`, `src/app/admin/layout.js`, and `src/app/admin/page.js`. Added `tests/unit/ui-shell.test.js` for nav config, redirect mapping, and anonymous guard redirect. No auth screens or spec decisions were added.
+- Tests: `npm run lint` pass; `npm test` pass (15 files / 73 tests); `npm run test:integration` first run timed out at 180s with no code change, rerun pass (39 passed, 1 skipped) against Neon dev branch in 251.6s with a 600s timeout; `npm run build` pass with `/dashboard`, `/provider/dashboard`, and `/admin` dynamic; `npm run test:e2e -- --list` pass (1 health smoke test, browsers still not installed locally).
+- Blockers: none. The `(auth)` route group remains empty until M2.12; the guard redirects to `/login`, which will be implemented in that phase. Admin MFA enrollment screens remain M2.13. No commit was made on this phase branch.
+- Next step: M2.12 — build auth screens for register/login/logout/me, email verification, and password reset using the existing endpoints.
 
 ### 2026-11-22 — M2.10 — M2 positive and negative tests
 
