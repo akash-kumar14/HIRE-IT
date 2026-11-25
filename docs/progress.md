@@ -2,16 +2,16 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-23
-**Current focus:** M2.13 — Admin MFA screens (enroll/confirm/verify/recovery)
-**Overall status:** Documentation baseline complete; M1.1–M1.11 and M2.1–M2.12 done; M2.13 next.
+**Last updated:** 2026-11-25
+**Current focus:** M3.1 — Categories/skills public reads and admin management
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1 next.
 
 ## Milestones
 
 | ID | Milestone | Status | Notes |
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
-| M2 | Authentication and authorization | In progress | M2.1–M2.12 done; M2.13 remains |
+| M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
 | M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
@@ -55,7 +55,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.12 Auth screens (split into M2.12a / M2.12b)
   - [x] M2.12a Login, register, logout, and current profile screens
   - [x] M2.12b Email verification and password reset screens
-- [ ] M2.13 Admin MFA screens (enroll/confirm/verify/recovery)
+- [x] M2.13 Admin MFA screens (enroll/confirm/verify/recovery)
 
 ### M3 — Provider applications and verification
 - [ ] M3.1 Categories/skills public reads and admin management
@@ -234,10 +234,27 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-23 | `npm run test:integration` (M2.12b) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 237s with a 600s timeout |
 | 2026-11-23 | `npm run build` (M2.12b) | Pass | `/verify-email`, `/password-reset`, and `/password-reset/confirm` added to the route list |
 | 2026-11-23 | `npm run test:e2e -- --list` (M2.12b) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-23 | `npm run lint` (M2.13) | Pass | 0 errors, 0 warnings |
+| 2026-11-23 | `npm test` (M2.13) | Pass | 16 unit test files, 83 tests; MFA redirect and admin setup guard covered |
+| 2026-11-23 | `npm run test:integration` (M2.13) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 230s with a 600s timeout |
+| 2026-11-23 | `npm run build` (M2.13) | Pass | `/mfa/enroll`, `/mfa/verify`, and `/mfa/recovery` added to the route list |
+| 2026-11-23 | `npm run test:e2e -- --list` (M2.13) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-25 | `npm run lint` (M2.13 pre-push) | Pass | 0 errors, 0 warnings |
+| 2026-11-25 | `npm test` (M2.13 pre-push) | Pass | 16 unit test files, 83 tests |
+| 2026-11-25 | `npm run test:integration` (M2.13 pre-push) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 234s with a 600s timeout |
+| 2026-11-25 | `npm run build` (M2.13 pre-push) | Pass | Production build succeeds with the three MFA screens |
+| 2026-11-25 | `npm run test:e2e -- --list` (M2.13 pre-push) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-23 — M2.13 — Admin MFA screens
+
+- Changed: created `feat/m2.13-admin-mfa-screens` from the pushed M2.12 commit; `origin/main` now contains the M2.11 and M2.12 merge commits. Added `requireAdminSetupSession()` and an `MfaRequiredError` redirect to `/mfa/verify` in `src/lib/ui/session-guard.js`, so the existing MFA-verified admin layout no longer blocks enrollment or verification. Added a Security link to the admin navigation. Created `src/components/admin/mfa-forms.js` with enrollment, authenticator verification, and one-time recovery-code forms over the existing endpoints. Created `src/app/(admin-mfa)/mfa/layout.js` plus `/mfa/verify`, `/mfa/enroll`, and `/mfa/recovery` pages that require an admin profile but not prior MFA. Non-admin users are redirected home and unauthenticated users to `/login`; no email-only recovery path was added. Updated `tests/unit/ui-shell.test.js`. No API routes, schema, spec, or ADR changes.
+- Tests: `npm run lint` pass; `npm test` pass (16 files / 83 tests); `npm run test:integration` pass (39 passed, 1 skipped) against Neon dev branch in 230s; `npm run build` pass with `/mfa/enroll`, `/mfa/verify`, and `/mfa/recovery`; `npm run test:e2e -- --list` pass (1 health smoke test, browsers still not installed locally).
+- Blockers: none. MFA setup screens require an active admin profile by design. This completes M2. Pre-push checks rerun on 2026-11-25 all passed; `.env.example` `ADMIN_EMAIL` restored to a blank example before commit. Committed on `feat/m2.13-admin-mfa-screens` and pushed to `origin`.
+- Next step: M3.1 — public category/skill reads and admin management.
 
 ### 2026-11-23 — M2.12b — Auth screens: verification and reset
 
