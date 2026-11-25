@@ -3,8 +3,8 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-25
-**Current focus:** M3.1 — Categories/skills public reads and admin management
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1 next.
+**Current focus:** M3.2 — Provider application submit and status
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1 done; M3.2 next.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | Not started | Phases M3.1–M3.7 |
+| M3 | Provider applications and verification | In progress | M3.1 done; M3.2–M3.7 remain |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -58,7 +58,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M2.13 Admin MFA screens (enroll/confirm/verify/recovery)
 
 ### M3 — Provider applications and verification
-- [ ] M3.1 Categories/skills public reads and admin management
+- [x] M3.1 Categories/skills public reads and admin management
 - [ ] M3.2 Provider application submit and status
 - [ ] M3.3 Verification requirements and records
 - [ ] M3.4 R2 storage adapter (presign, complete, authorized download)
@@ -244,10 +244,26 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-25 | `npm run test:integration` (M2.13 pre-push) | Pass | 39 tests passed, 1 skipped against Neon dev branch in 234s with a 600s timeout |
 | 2026-11-25 | `npm run build` (M2.13 pre-push) | Pass | Production build succeeds with the three MFA screens |
 | 2026-11-25 | `npm run test:e2e -- --list` (M2.13 pre-push) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-25 | `npm run lint` (M3.1) | Pass | 0 errors, 0 warnings |
+| 2026-11-25 | `npm test` (M3.1, first run) | Fail | Two new unit assertions expected wrong messages; test-only fixes |
+| 2026-11-25 | `npm test` (M3.1, rerun) | Pass | 17 unit test files, 93 tests |
+| 2026-11-25 | `npm run test:integration` (M3.1, first run) | Fail | Register assertion expected 200 instead of 201, and the locally bootstrapped super admin blocked `admin.test.js`; test fix plus temporary profile park |
+| 2026-11-25 | `npm run test:integration` (M3.1, second run) | Fail | Setup hook hit the default 10s timeout; hook timeout raised to 60s |
+| 2026-11-25 | `npm run test:integration` (M3.1, third run) | Fail | Audit actor key was wrong and non-admin code expectation was incorrect; production and test fixes |
+| 2026-11-25 | `npm run test:integration` (M3.1, final run) | Pass | 44 tests passed, 1 skipped in 292s with a 600s timeout |
+| 2026-11-25 | `npm run build` (M3.1) | Pass | Four new admin/catalog routes compile as dynamic routes |
+| 2026-11-25 | `npm run test:e2e -- --list` (M3.1) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-25 — M3.1 — Categories/skills reads and admin management
+
+- Changed: created `feat/m3.1-categories-skills` from `origin/main` after the M2.13 merge. Added `src/modules/categories/catalog.service.js` and `catalog.validation.js`, public `GET /api/v1/categories` and `GET /api/v1/categories/{id}/skills` with active-only filtering and pagination metadata, and MFA-gated `POST/PATCH /api/v1/admin/categories` and `POST/PATCH /api/v1/admin/skills` with validation, duplicate conflict mapping, 404 handling, deactivation instead of deletion, and audit records. Added `tests/unit/catalog.test.js` and `tests/integration/catalog.test.js`. No schema, migration, or spec changes.
+- Tests: lint pass; unit pass after fixing two assertion messages (17 files / 93 tests); integration pass after fixing register status, hook timeout, audit actor key, and non-admin code expectations (44 passed, 1 skipped); build pass with four new dynamic routes; Playwright discovery pass.
+- Blockers: none. `admin.test.js` assumes no pre-existing admin profile, so the locally bootstrapped super admin was temporarily parked with its MFA credential and restored afterward; decryption and audit links were verified. Committed on `feat/m3.1-categories-skills` and pushed to `origin`; no PR or merge was made.
+- Next step: M3.2 — provider application submit and own-status endpoints.
 
 ### 2026-11-23 — M2.13 — Admin MFA screens
 
