@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { getShellNavigation } from "@/lib/ui/navigation.js";
 import {
+  requireAdminSetupSession,
   requireCustomerSession,
   sessionRedirectPath,
 } from "@/lib/ui/session-guard.js";
@@ -38,6 +39,7 @@ describe("getShellNavigation", () => {
     ]);
     expect(getShellNavigation("admin")).toEqual([
       { href: "/admin", label: "Overview" },
+      { href: "/mfa/verify", label: "Security" },
     ]);
   });
 
@@ -53,7 +55,10 @@ describe("sessionRedirectPath", () => {
 
   it("maps authorization failures to home", () => {
     expect(sessionRedirectPath(new AccountStatusError())).toBe("/");
-    expect(sessionRedirectPath(new MfaRequiredError())).toBe("/");
+  });
+
+  it("routes MFA requirements to the security screen", () => {
+    expect(sessionRedirectPath(new MfaRequiredError())).toBe("/mfa/verify");
   });
 
   it("does not conceal unexpected errors", () => {
@@ -64,5 +69,11 @@ describe("sessionRedirectPath", () => {
 describe("requireCustomerSession", () => {
   it("redirects anonymous visitors before rendering the shell", async () => {
     await expect(requireCustomerSession()).rejects.toThrow("REDIRECT:/login");
+  });
+});
+
+describe("requireAdminSetupSession", () => {
+  it("redirects anonymous visitors to sign in", async () => {
+    await expect(requireAdminSetupSession()).rejects.toThrow("REDIRECT:/login");
   });
 });
