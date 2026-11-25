@@ -9,6 +9,10 @@ export const AUDIT_ACTIONS = Object.freeze({
   MFA_CONFIRM: "admin.mfa.confirm",
   MFA_VERIFY: "admin.mfa.verify",
   MFA_RECOVERY: "admin.mfa.recovery",
+  CATEGORY_CREATE: "admin.category.create",
+  CATEGORY_UPDATE: "admin.category.update",
+  SKILL_CREATE: "admin.skill.create",
+  SKILL_UPDATE: "admin.skill.update",
   DELETION_REQUEST_CREATED: "account.deletion_request.created",
 });
 
