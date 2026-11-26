@@ -14,6 +14,8 @@ export const AUDIT_ACTIONS = Object.freeze({
   SKILL_CREATE: "admin.skill.create",
   SKILL_UPDATE: "admin.skill.update",
   VERIFICATION_REQUIREMENT_CREATE: "admin.verification_requirement.create",
+  PROVIDER_APPLICATION_APPROVE: "admin.provider_application.approve",
+  PROVIDER_APPLICATION_REJECT: "admin.provider_application.reject",
   DELETION_REQUEST_CREATED: "account.deletion_request.created",
 });
 
