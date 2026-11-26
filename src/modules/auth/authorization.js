@@ -43,6 +43,24 @@ export class MfaRequiredError extends AuthorizationError {
   }
 }
 
+export class EmailVerificationRequiredError extends AuthorizationError {
+  constructor() {
+    super(
+      "EMAIL_VERIFICATION_REQUIRED",
+      "Verify your email address before applying.",
+      403,
+    );
+  }
+}
+
+export function assertVerifiedUser(user) {
+  if (!user?.emailVerifiedAt) {
+    throw new EmailVerificationRequiredError();
+  }
+
+  return user;
+}
+
 export async function requireAuthenticatedUser(request) {
   const current = await inspectSession(readSessionToken(request));
 
@@ -62,6 +80,13 @@ export async function requireAuthenticatedUser(request) {
   }
 
   return { session: current.session, user: current.user };
+}
+
+export async function requireVerifiedCustomer(request) {
+  const current = await requireAuthenticatedUser(request);
+  assertVerifiedUser(current.user);
+
+  return current;
 }
 
 export function assertOwnedBy(resource, userId, ownerField = "userId") {
