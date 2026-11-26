@@ -3,8 +3,8 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-26
-**Current focus:** M3.4 — R2 storage adapter (presign, complete, authorized download)
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.3 done; M3.4 next.
+**Current focus:** M3.5 — Admin application review with audited decisions
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.4 done; M3.5–M3.7 remain; M3.8 planned after M3.7.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1–M3.3 done; M3.4–M3.7 remain |
+| M3 | Provider applications and verification | In progress | M3.1–M3.4 done; M3.5–M3.7 remain; M3.8 planned |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -61,10 +61,11 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M3.1 Categories/skills public reads and admin management
 - [x] M3.2 Provider application submit and status
 - [x] M3.3 Verification requirements and records
-- [ ] M3.4 R2 storage adapter (presign, complete, authorized download)
+- [x] M3.4 R2 storage adapter (presign, complete, authorized short-lived download)
 - [ ] M3.5 Admin application review with audited decisions
 - [ ] M3.6 Service areas and availability endpoints
 - [ ] M3.7 Qualification expiry enforcement and M3 tests
+- [ ] M3.8 Role dashboard data and forms (planned after M3.7)
 
 ### M4 — AI-assisted task creation
 - [ ] M4.1 Gemini adapter (timeout, mock, structured parsing)
@@ -266,10 +267,30 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-26 | `npm run test:integration` (M3.3, rerun) | Pass | 55 tests passed, 1 skipped in 370s with a 600s timeout; local super admin parked and restored |
 | 2026-11-26 | `npm run build` (M3.3) | Pass | Three new public/provider/admin requirement routes compile as dynamic routes |
 | 2026-11-26 | `npm run test:e2e -- --list` (M3.3) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-26 | `npm run lint` (M3.4) | Pass | 0 errors, 0 warnings |
+| 2026-11-26 | `npm test` (M3.4) | Pass | 20 unit test files, 124 tests |
+| 2026-11-26 | `npm run test:integration` (M3.4, first run) | Fail | New download test omitted route context; oversized upload returned 422; `admin.test.js` saw the local super admin |
+| 2026-11-26 | `npm run test:integration` (M3.4, rerun) | Pass | 57 tests passed, 1 skipped in 395s with a 600s timeout; local super admin parked and restored |
+| 2026-11-26 | `npm run build` (M3.4) | Pass | Three new upload/download routes compile as dynamic routes |
+| 2026-11-26 | `npm run test:e2e -- --list` (M3.4) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-26 — M3.4 — R2 storage adapter
+
+- Changed: created `feat/m3.4-r2-storage-adapter` from `origin/main` (`b3a73cd`) carrying the uncommitted M3.8 planning edits. Added `src/lib/db/schema/uploads.js` and migration `drizzle/0006_uneven_the_santerians.sql` plus its down migration; `uploads` records purpose, object key, MIME/size, status, owner, and related entity. Added `STORAGE_DRIVER` to config and `.env.example`, `src/infrastructure/storage/index.js` with manual SigV4 R2 presigning/HEAD checks plus a non-production mock, `src/modules/storage/uploads.validation.js` and `uploads.service.js`, and `POST /api/v1/uploads/presign`, `POST /api/v1/uploads/complete`, `GET /api/v1/files/{id}/download`. Presign is provider-owned and rate-limited; complete verifies object existence and atomically links `documentObjectKey`; download is owner-or-MFA-admin and does not return raw object keys as metadata. Reordered `src/lib/api/handler.js` typed-error mapping so `FILE_TOO_LARGE` keeps its 413 status. Added `tests/unit/storage.test.js` and `tests/integration/uploads.test.js`. No spec or ADR changes.
+- Tests: lint pass; unit pass (20 files / 124 tests); integration pass after fixing the test route context and error status mapping (57 passed, 1 skipped); build pass with three new dynamic routes; Playwright discovery pass.
+- Blockers: none. The first full integration run failed only in `admin.test.js` because a local super admin already exists; its profile, MFA credential, and two audit links were snapshotted, parked, restored, and verified. No commit was made on this phase branch.
+- Next step: M3.5 — Admin application review with audited decisions.
+
+### 2026-11-26 — M3.8 planning — Role dashboard data and forms
+
+- Changed: added `M3.8` to `docs/04-implementation-plan.md` §3 and mirrored the same phase into `docs/ai_service_marketplace_complete_documentation.md`. Updated this file's phase list and M3 milestone note with the planned phase. Scope: customer/provider/admin dashboards consume existing M1–M3 data; provider application and admin category/skill/requirement forms call existing endpoints; tasks, offers, and review queues remain explicit placeholders. No UI code, API endpoints, schema, migration, or ADR changes.
+- Tests: not applicable; documentation-only change.
+- Blockers: none. M3.8 is queued after M3.7; do not start it before M3.4–M3.7 pass. No new backend endpoints are planned for this phase.
+- Next step: continue M3.4 — R2 storage adapter (presign, complete, authorized download).
 
 ### 2026-11-26 — M3.3 — Verification requirements and records
 

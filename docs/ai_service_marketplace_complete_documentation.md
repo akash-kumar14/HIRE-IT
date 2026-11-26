@@ -714,6 +714,7 @@ Phases:
 - `M3.5` Admin application review: list/detail/approve/reject with audited reasons.
 - `M3.6` Service areas and availability toggle/weekly schedule endpoints.
 - `M3.7` Qualification expiry enforcement and M3 tests (documents private, unapproved blocked).
+- `M3.8` Role dashboard data and forms: customer/provider/admin pages consume existing M1–M3 data; provider application and admin category/skill/requirement forms use existing endpoints; tasks, offers, and review queues remain explicit placeholders.
 
 ### M4 — AI-assisted task creation
 

@@ -8,3 +8,4 @@ export * from "./reviews.js";
 export * from "./disputes.js";
 export * from "./jobs.js";
 export * from "./rate-limits.js";
+export * from "./uploads.js";

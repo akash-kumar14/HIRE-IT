@@ -7,6 +7,13 @@ export async function handleRequest(request, handler) {
   try {
     return await handler({ request, requestId });
   } catch (error) {
+    if (error?.code && Number.isInteger(error?.status)) {
+      return errorResponse(error.code, error.message, {
+        status: error.status,
+        requestId,
+      });
+    }
+
     if (error?.name === "ValidationError") {
       return errorResponse("VALIDATION_ERROR", error.message, {
         status: 422,
@@ -56,13 +63,6 @@ export async function handleRequest(request, handler) {
           meta: { retryAfterSeconds: error.retryAfterSeconds },
         },
       );
-    }
-
-    if (error?.code && Number.isInteger(error?.status)) {
-      return errorResponse(error.code, error.message, {
-        status: error.status,
-        requestId,
-      });
     }
 
     return errorResponse("INTERNAL_ERROR", "Unexpected error.", {
