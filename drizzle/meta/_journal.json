@@ -43,6 +43,13 @@
       "when": 1795274780569,
       "tag": "0005_session_mfa_verified_at",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795690556012,
+      "tag": "0006_uneven_the_santerians",
+      "breakpoints": true
     }
   ]
 }

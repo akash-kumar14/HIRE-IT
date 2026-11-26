@@ -29,6 +29,7 @@ const RULES = {
   R2_ACCESS_KEY_ID: isNonEmpty,
   R2_SECRET_ACCESS_KEY: isNonEmpty,
   R2_BUCKET_NAME: isNonEmpty,
+  STORAGE_DRIVER: (value) => value === "r2" || value === "mock",
   RESEND_API_KEY: isNonEmpty,
   EMAIL_FROM: isNonEmpty,
   SENTRY_DSN: isHttpUrl,
