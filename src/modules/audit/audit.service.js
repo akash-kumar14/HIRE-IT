@@ -13,6 +13,7 @@ export const AUDIT_ACTIONS = Object.freeze({
   CATEGORY_UPDATE: "admin.category.update",
   SKILL_CREATE: "admin.skill.create",
   SKILL_UPDATE: "admin.skill.update",
+  VERIFICATION_REQUIREMENT_CREATE: "admin.verification_requirement.create",
   DELETION_REQUEST_CREATED: "account.deletion_request.created",
 });
 
