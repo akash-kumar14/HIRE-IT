@@ -3,8 +3,8 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-25
-**Current focus:** M3.2 — Provider application submit and status
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1 done; M3.2 next.
+**Current focus:** M3.3 — Verification requirements and records
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1 and M3.2 done; M3.3 next.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1 done; M3.2–M3.7 remain |
+| M3 | Provider applications and verification | In progress | M3.1 and M3.2 done; M3.3–M3.7 remain |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -59,7 +59,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 
 ### M3 — Provider applications and verification
 - [x] M3.1 Categories/skills public reads and admin management
-- [ ] M3.2 Provider application submit and status
+- [x] M3.2 Provider application submit and status
 - [ ] M3.3 Verification requirements and records
 - [ ] M3.4 R2 storage adapter (presign, complete, authorized download)
 - [ ] M3.5 Admin application review with audited decisions
@@ -253,10 +253,22 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-25 | `npm run test:integration` (M3.1, final run) | Pass | 44 tests passed, 1 skipped in 292s with a 600s timeout |
 | 2026-11-25 | `npm run build` (M3.1) | Pass | Four new admin/catalog routes compile as dynamic routes |
 | 2026-11-25 | `npm run test:e2e -- --list` (M3.1) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-25 | `npm run lint` (M3.2) | Pass | 0 errors, 0 warnings |
+| 2026-11-25 | `npm test` (M3.2) | Pass | 18 unit test files, 103 tests |
+| 2026-11-25 | `npm run test:integration` (M3.2) | Pass | 49 tests passed, 1 skipped in 309s with a 600s timeout; real super admin parked during the run |
+| 2026-11-25 | `npm run build` (M3.2) | Pass | Three new application/profile routes compile as dynamic routes |
+| 2026-11-25 | `npm run test:e2e -- --list` (M3.2) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-25 — M3.2 — Provider application submit and status
+
+- Changed: created `feat/m3.2-provider-applications` from `origin/main` after M3.1 was merged via PR #27. Added `requireVerifiedCustomer()` and `assertVerifiedUser()` to `src/modules/auth/authorization.js`, added `src/modules/providers/provider-applications.validation.js` and `provider-applications.service.js`, and created `POST /api/v1/provider-applications`, `GET /api/v1/provider-applications/me`, and `GET /api/v1/providers/me`. A verified email is required to submit; active applications return `APPLICATION_EXISTS`; rejected applications may resubmit as pending with a fresh timestamp and availability reset; own reads return `PROVIDER_PROFILE_NOT_FOUND` when no profile exists. Added `tests/unit/provider-applications.test.js` and `tests/integration/provider-applications.test.js`. No schema, migration, or spec changes.
+- Tests: lint pass; unit pass (18 files / 103 tests); integration pass (49 passed, 1 skipped); build pass with three new dynamic routes; Playwright discovery pass.
+- Blockers: none. `admin.test.js` still assumes no pre-existing admin profile, so the local super admin was parked with its MFA credential and restored afterward; decryption, confirmation, and two audit links were verified. No commit was made on this phase branch.
+- Next step: M3.3 — verification requirements and provider verification records.
 
 ### 2026-11-25 — M3.1 — Categories/skills reads and admin management
 
