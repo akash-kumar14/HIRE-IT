@@ -2,9 +2,9 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-25
-**Current focus:** M3.3 — Verification requirements and records
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1 and M3.2 done; M3.3 next.
+**Last updated:** 2026-11-26
+**Current focus:** M3.4 — R2 storage adapter (presign, complete, authorized download)
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.3 done; M3.4 next.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1 and M3.2 done; M3.3–M3.7 remain |
+| M3 | Provider applications and verification | In progress | M3.1–M3.3 done; M3.4–M3.7 remain |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -60,7 +60,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 ### M3 — Provider applications and verification
 - [x] M3.1 Categories/skills public reads and admin management
 - [x] M3.2 Provider application submit and status
-- [ ] M3.3 Verification requirements and records
+- [x] M3.3 Verification requirements and records
 - [ ] M3.4 R2 storage adapter (presign, complete, authorized download)
 - [ ] M3.5 Admin application review with audited decisions
 - [ ] M3.6 Service areas and availability endpoints
@@ -128,6 +128,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 
 - `npm audit` reports 0 production vulnerabilities; 4 moderate dev-only advisories (esbuild via `drizzle-kit` / `@esbuild-kit` loader).
 - ADR-113 geographic matching choice open (PostGIS vs numeric + haversine).
+- `admin.test.js` assumes no pre-existing admin profile; park and restore the local super admin around full integration runs.
 - Vendor checks pending: Vercel plan, Neon PostGIS availability, Gemini terms/quotas, R2, Resend, Sentry.
 - Integration suite takes about four minutes against the Neon dev branch; use a 600s command timeout.
 
@@ -258,10 +259,24 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-25 | `npm run test:integration` (M3.2) | Pass | 49 tests passed, 1 skipped in 309s with a 600s timeout; real super admin parked during the run |
 | 2026-11-25 | `npm run build` (M3.2) | Pass | Three new application/profile routes compile as dynamic routes |
 | 2026-11-25 | `npm run test:e2e -- --list` (M3.2) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-26 | `npm run lint` (M3.3) | Pass | 0 errors, 0 warnings |
+| 2026-11-26 | `npm test` (M3.3, first run) | Fail | Two new unit assertions used the wrong audit field name and regenerated timestamp fixtures; test-only fixes |
+| 2026-11-26 | `npm test` (M3.3, rerun) | Pass | 19 unit test files, 114 tests |
+| 2026-11-26 | `npm run test:integration` (M3.3, first run) | Fail | `admin.test.js` failed because the local super admin was present; no code change |
+| 2026-11-26 | `npm run test:integration` (M3.3, rerun) | Pass | 55 tests passed, 1 skipped in 370s with a 600s timeout; local super admin parked and restored |
+| 2026-11-26 | `npm run build` (M3.3) | Pass | Three new public/provider/admin requirement routes compile as dynamic routes |
+| 2026-11-26 | `npm run test:e2e -- --list` (M3.3) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-26 — M3.3 — Verification requirements and records
+
+- Changed: created `feat/m3.3-verification-records` from `origin/main` after M3.2 was merged via PR #29. Added `src/modules/providers/verification.validation.js` and `verification.service.js`, `GET /api/v1/categories/{id}/requirements` with active-only filtering and pagination, MFA-gated `POST /api/v1/admin/verification-requirements` with duplicate conflict and an audited admin action, and `GET /api/v1/providers/me/verifications` with requirement details and no private document key or reviewer ID. Added `AUDIT_ACTIONS.VERIFICATION_REQUIREMENT_CREATE`. Added `tests/unit/verification.test.js` and `tests/integration/verification.test.js`. No schema, migration, or spec changes.
+- Tests: lint pass; unit pass after fixing two assertion mistakes (19 files / 114 tests); integration pass after parking the local super admin (55 passed, 1 skipped); build pass with three new dynamic routes; Playwright discovery pass.
+- Blockers: none. The first full integration run failed only in `admin.test.js` because a local super admin already exists; its profile, MFA credential, and two audit links were snapshotted, parked, restored, and verified field-for-field. Committed on `feat/m3.3-verification-records` and pushed to `origin`; no PR or merge was made.
+- Next step: M3.4 — R2 storage adapter for presign, complete, and authorized short-lived download.
 
 ### 2026-11-25 — M3.2 — Provider application submit and status
 
