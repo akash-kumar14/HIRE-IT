@@ -3,8 +3,8 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-26
-**Current focus:** M3.5 — Admin application review with audited decisions
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.4 done; M3.5–M3.7 remain; M3.8 planned after M3.7.
+**Current focus:** M3.6 — Service areas and availability endpoints
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.5 done; M3.6–M3.7 remain; M3.8 planned after M3.7.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1–M3.4 done; M3.5–M3.7 remain; M3.8 planned |
+| M3 | Provider applications and verification | In progress | M3.1–M3.5 done; M3.6–M3.7 remain; M3.8 planned |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -62,7 +62,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M3.2 Provider application submit and status
 - [x] M3.3 Verification requirements and records
 - [x] M3.4 R2 storage adapter (presign, complete, authorized short-lived download)
-- [ ] M3.5 Admin application review with audited decisions
+- [x] M3.5 Admin application review with audited decisions
 - [ ] M3.6 Service areas and availability endpoints
 - [ ] M3.7 Qualification expiry enforcement and M3 tests
 - [ ] M3.8 Role dashboard data and forms (planned after M3.7)
@@ -273,10 +273,25 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-26 | `npm run test:integration` (M3.4, rerun) | Pass | 57 tests passed, 1 skipped in 395s with a 600s timeout; local super admin parked and restored |
 | 2026-11-26 | `npm run build` (M3.4) | Pass | Three new upload/download routes compile as dynamic routes |
 | 2026-11-26 | `npm run test:e2e -- --list` (M3.4) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-26 | `npm run lint` (M3.5) | Pass | 0 errors, 0 warnings |
+| 2026-11-26 | `npm test` (M3.5, first run) | Fail | New validation module re-exported `parsePagination` without a local binding; fixed with an explicit import |
+| 2026-11-26 | `npm test` (M3.5, rerun) | Pass | 21 unit test files, 131 tests |
+| 2026-11-26 | `npx vitest run --config vitest.integration.config.js tests/integration/application-review.test.js` (first run) | Fail | Test passed a token string where a request was expected; test-only fix |
+| 2026-11-26 | `npx vitest run --config vitest.integration.config.js tests/integration/application-review.test.js` (rerun) | Pass | 3 review endpoint tests |
+| 2026-11-26 | `npm run test:integration` (M3.5) | Pass | 60 tests passed, 1 skipped in 439s with a 600s timeout; local super admin parked and restored |
+| 2026-11-26 | `npm run build` (M3.5) | Pass | Four new admin review routes compile as dynamic routes |
+| 2026-11-26 | `npm run test:e2e -- --list` (M3.5) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-26 — M3.5 — Admin application review
+
+- Changed: created `feat/m3.5-admin-application-review` from `origin/main` after M3.4 was merged via PR #31 (`7c154e5`). An initial branch from the old M3.4 feature branch was recreated from `origin/main` because no commits existed on it. Added `PROVIDER_APPLICATION_APPROVE` and `PROVIDER_APPLICATION_REJECT` audit actions, `src/modules/providers/application-review.validation.js` and `application-review.service.js`, and four MFA-gated admin routes: list with status filter/pagination, detail with applicant/skills/verification summaries, approve, and reject. Decisions only apply to pending applications, clear availability, set `approvedAt` on approval, and write audit metadata containing the optional note or required rejection reason. Detail exposes document presence but no object key or reviewer ID. Added `tests/unit/application-review.test.js` and `tests/integration/application-review.test.js`. No schema, migration, spec, or ADR changes.
+- Tests: lint pass; unit pass (21 files / 131 tests); focused integration pass (3 tests) after fixing a test request helper; full integration pass (60 passed, 1 skipped); build pass with four new dynamic routes; Playwright discovery pass.
+- Blockers: none. The full integration run required parking the local super admin again; its profile, MFA credential, and two audit links were snapshotted, restored, and verified. No commit was made on this phase branch.
+- Next step: M3.6 — Service areas and availability endpoints.
 
 ### 2026-11-26 — M3.4 — R2 storage adapter
 
