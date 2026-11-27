@@ -3,8 +3,8 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-27
-**Current focus:** M3.8 — Role dashboard data and forms
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.7 done; M3.8 planned after M3.7.
+**Current focus:** M3.8b — Provider application form
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.7 done; M3.8a done; M3.8b and M3.8c remain.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1–M3.7 done; M3.8 planned |
+| M3 | Provider applications and verification | In progress | M3.1–M3.7 and M3.8a done; M3.8b–M3.8c remain |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -65,7 +65,10 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M3.5 Admin application review with audited decisions
 - [x] M3.6 Service areas and availability endpoints
 - [x] M3.7 Qualification expiry enforcement and M3 tests
-- [ ] M3.8 Role dashboard data and forms (planned after M3.7)
+- [ ] M3.8 Role dashboard data and forms (split into M3.8a / M3.8b / M3.8c)
+  - [x] M3.8a Role dashboard data surfaces
+  - [ ] M3.8b Provider application form
+  - [ ] M3.8c Admin category, skill, and requirement forms
 
 ### M4 — AI-assisted task creation
 - [ ] M4.1 Gemini adapter (timeout, mock, structured parsing)
@@ -307,10 +310,21 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-27 | M3.7 file/endpoint recheck: `npx vitest run --config vitest.integration.config.js tests/integration/provider-settings.test.js` | Pass | 5 provider settings endpoint tests; no leftover rows |
 | 2026-11-27 | M3.7 file/endpoint recheck: `npm run build` | Pass | All M3.7-related routes compile |
 | 2026-11-27 | M3.7 file/endpoint recheck: `npm run test:e2e -- --list` | Pass | 1 Playwright health smoke test discovered |
+| 2026-11-27 | `npm run lint` (M3.8a) | Pass | 0 errors, 0 warnings |
+| 2026-11-27 | `npm test` (M3.8a) | Pass | 24 unit test files, 150 tests |
+| 2026-11-27 | `npm run build` (M3.8a) | Pass | Customer, provider, and admin dashboards compile with dynamic session data |
+| 2026-11-27 | `npm run test:e2e -- --list` (M3.8a) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-27 — M3.8a — Role dashboard data surfaces
+
+- Changed: created `feat/m3.8-role-dashboard-data-and-forms` from `origin/main` after M3.7 was merged via PR #34 (`ac43031`). Split M3.8 into M3.8a dashboards, M3.8b provider application form, and M3.8c admin forms. Added `src/lib/ui/dashboard-data.js` and `tests/unit/dashboard-data.test.js`; added `src/components/dashboard/summary-card.js`; rewired `src/app/(customer)/dashboard/page.js`, `src/app/(provider)/provider/dashboard/page.js`, and `src/app/admin/page.js` to consume existing M1–M3 services. Customer shows account state and active categories, provider shows application/verification/service-area/availability summaries with expired-qualification counts, and admin shows pending reviews and active categories. Tasks, offers, review queues, and management forms remain explicit placeholders. No schema, migration, API, spec, or ADR changes.
+- Tests: lint pass; unit pass (24 files / 150 tests); build pass with all three dashboards still dynamic; Playwright discovery pass.
+- Blockers: none. Browser-backed dashboard journeys are not run locally because Playwright browsers are not installed; unit data tests and production build cover the new logic and compilation.
+- Next step: M3.8b — Provider application form.
 
 ### 2026-11-27 — M3.7 — File and endpoint recheck
 
