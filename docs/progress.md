@@ -2,9 +2,9 @@
 
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
-**Last updated:** 2026-11-26
-**Current focus:** M3.6 — Service areas and availability endpoints
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.5 done; M3.6–M3.7 remain; M3.8 planned after M3.7.
+**Last updated:** 2026-11-27
+**Current focus:** M3.7 — Qualification expiry enforcement and M3 tests
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.6 done; M3.7 remains; M3.8 planned after M3.7.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1–M3.5 done; M3.6–M3.7 remain; M3.8 planned |
+| M3 | Provider applications and verification | In progress | M3.1–M3.6 done; M3.7 remains; M3.8 planned |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -63,7 +63,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M3.3 Verification requirements and records
 - [x] M3.4 R2 storage adapter (presign, complete, authorized short-lived download)
 - [x] M3.5 Admin application review with audited decisions
-- [ ] M3.6 Service areas and availability endpoints
+- [x] M3.6 Service areas and availability endpoints
 - [ ] M3.7 Qualification expiry enforcement and M3 tests
 - [ ] M3.8 Role dashboard data and forms (planned after M3.7)
 
@@ -130,8 +130,9 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - `npm audit` reports 0 production vulnerabilities; 4 moderate dev-only advisories (esbuild via `drizzle-kit` / `@esbuild-kit` loader).
 - ADR-113 geographic matching choice open (PostGIS vs numeric + haversine).
 - `admin.test.js` assumes no pre-existing admin profile; park and restore the local super admin around full integration runs.
+- API spec has no service-area endpoint payload schemas; M3.6 endpoints are documented in the M3.6 work log and OpenAPI remains an outstanding item.
 - Vendor checks pending: Vercel plan, Neon PostGIS availability, Gemini terms/quotas, R2, Resend, Sentry.
-- Integration suite takes about four minutes against the Neon dev branch; use a 600s command timeout.
+- Integration suite takes about seven to eight minutes against the Neon dev branch; use a 600s command timeout.
 
 ## Test status
 
@@ -281,10 +282,24 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-26 | `npm run test:integration` (M3.5) | Pass | 60 tests passed, 1 skipped in 439s with a 600s timeout; local super admin parked and restored |
 | 2026-11-26 | `npm run build` (M3.5) | Pass | Four new admin review routes compile as dynamic routes |
 | 2026-11-26 | `npm run test:e2e -- --list` (M3.5) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-27 | `npm run lint` (M3.6) | Pass | 0 errors, 0 warnings |
+| 2026-11-27 | `npm test` (M3.6, first run) | Fail | Fake DB mutation stubs recorded updates only on `returning()`; test-only fixes |
+| 2026-11-27 | `npm test` (M3.6, rerun) | Pass | 22 unit test files, 140 tests |
+| 2026-11-27 | `npx vitest run --config vitest.integration.config.js tests/integration/provider-settings.test.js` | Pass | 5 provider settings endpoint tests |
+| 2026-11-27 | `npm run test:integration` (M3.6) | Pass | 65 tests passed, 1 skipped in 463.7s with a 600s timeout; local super admin parked and restored |
+| 2026-11-27 | `npm run build` (M3.6) | Pass | Four new provider service-area/availability routes compile as dynamic routes |
+| 2026-11-27 | `npm run test:e2e -- --list` (M3.6) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-27 — M3.6 — Service areas and availability endpoints
+
+- Changed: created `feat/m3.6-service-areas-availability` from `origin/main` after M3.5 was merged via PR #32 (`11bbb49`). Added `src/modules/providers/provider-settings.validation.js` and `provider-settings.service.js`, plus GET/POST `/api/v1/providers/me/service-areas`, DELETE `/api/v1/providers/me/service-areas/{id}`, GET/PATCH `/api/v1/providers/me/availability`, and PUT `/api/v1/providers/me/availability/weekly`. Service areas are scoped to the authenticated user's provider profile; a new primary area clears earlier primaries in a transaction and deletes outside the owner's scope return `SERVICE_AREA_NOT_FOUND`. Weekly slots are replaced in one transaction with HH:MM ordering, IANA timezone, and duplicate-window validation. Only approved providers may enable availability or replace weekly slots (`PROVIDER_NOT_APPROVED`, 403); disabling updates only `provider_profiles.is_available`, leaving slots and bookings untouched. Exception endpoints remain in M6.1 per the implementation plan. Added `tests/unit/provider-settings.test.js` and `tests/integration/provider-settings.test.js`. No schema, migration, spec, or ADR changes.
+- Tests: lint pass; unit pass after fixing test-only fake DB mutation stubs (22 files / 140 tests); focused integration pass (5 tests); full integration pass (65 passed, 1 skipped in 463.7s with a 600s timeout); build pass with four new dynamic routes; Playwright discovery pass.
+- Blockers: none. The full integration run required parking the local super admin again; its profile, MFA credential, and two audit links were snapshotted, restored, and verified field-for-field. The API spec still has no service-area endpoint payload schemas and OpenAPI remains an outstanding item; no ADR change. Committed on `feat/m3.6-service-areas-availability` and pushed to `origin`; no PR or merge was made.
+- Next step: M3.7 — Qualification expiry enforcement and M3 tests (documents private, unapproved blocked).
 
 ### 2026-11-26 — M3.5 — Admin application review
 
