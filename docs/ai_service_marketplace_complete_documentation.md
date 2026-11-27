@@ -483,6 +483,8 @@ Admin provider endpoints:
 
 Record actor, timestamp, decision, reason, and applicable requirements for verification decisions.
 
+Verification expiry uses UTC: `expiresAt <= now` or status `expired` yields effective status `expired` and `isExpired: true`; expired or revoked records do not satisfy a requirement. Enabling availability or replacing weekly slots requires an approved provider profile and no expired verification on that profile; task-specific eligibility remains an M5 hard filter.
+
 ## 5. Categories and requirements
 
 - `GET /categories`
@@ -1041,6 +1043,7 @@ The consultation register contains ADR-001 through ADR-109. The following groupe
 - **ADR-112:** Canonical task states are `draft`, `published`, `matching`, `offers_received`, `assigned`, `in_progress`, `completed`, `disputed`, `cancelled`. The earlier `provider_selected` and `completion_submitted` names are retired.
 - **ADR-113:** Geographic matching remains an open decision between (a) PostGIS geometry columns with GiST indexes and (b) numeric latitude/longitude with application-level haversine filtering. Both are documented; implementation choice is deferred pending Neon PostGIS verification.
 - **ADR-114:** API responses use `{ success, data, meta }` for success and `{ success, error }` for failures, including a `meta.requestId` correlation identifier.
+- **ADR-115:** A verification is expired when its stored `expires_at` is at or before the current UTC time or its status is `expired`; expired or revoked verifications do not satisfy requirements. Until category-scoped task acceptance is implemented in M5, enabling availability or replacing weekly slots requires an approved provider profile and no expired verification on that profile; M5 remains authoritative for task-specific eligibility.
 
 ## 3. Initial matching weights
 

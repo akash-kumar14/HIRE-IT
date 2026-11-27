@@ -3,8 +3,8 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-27
-**Current focus:** M3.7 — Qualification expiry enforcement and M3 tests
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.6 done; M3.7 remains; M3.8 planned after M3.7.
+**Current focus:** M3.8 — Role dashboard data and forms
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.7 done; M3.8 planned after M3.7.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1–M3.6 done; M3.7 remains; M3.8 planned |
+| M3 | Provider applications and verification | In progress | M3.1–M3.7 done; M3.8 planned |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -64,7 +64,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M3.4 R2 storage adapter (presign, complete, authorized short-lived download)
 - [x] M3.5 Admin application review with audited decisions
 - [x] M3.6 Service areas and availability endpoints
-- [ ] M3.7 Qualification expiry enforcement and M3 tests
+- [x] M3.7 Qualification expiry enforcement and M3 tests
 - [ ] M3.8 Role dashboard data and forms (planned after M3.7)
 
 ### M4 — AI-assisted task creation
@@ -131,6 +131,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - ADR-113 geographic matching choice open (PostGIS vs numeric + haversine).
 - `admin.test.js` assumes no pre-existing admin profile; park and restore the local super admin around full integration runs.
 - API spec has no service-area endpoint payload schemas; M3.6 endpoints are documented in the M3.6 work log and OpenAPI remains an outstanding item.
+- ADR-115 defines M3 expiry gating for availability writes; M5 hard filters remain responsible for task-specific eligibility.
 - Vendor checks pending: Vercel plan, Neon PostGIS availability, Gemini terms/quotas, R2, Resend, Sentry.
 - Integration suite takes about seven to eight minutes against the Neon dev branch; use a 600s command timeout.
 
@@ -289,10 +290,41 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-27 | `npm run test:integration` (M3.6) | Pass | 65 tests passed, 1 skipped in 463.7s with a 600s timeout; local super admin parked and restored |
 | 2026-11-27 | `npm run build` (M3.6) | Pass | Four new provider service-area/availability routes compile as dynamic routes |
 | 2026-11-27 | `npm run test:e2e -- --list` (M3.6) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-27 | `npm run lint` (M3.7) | Pass | 0 errors, 0 warnings |
+| 2026-11-27 | `npm test` (M3.7, first run) | Pass | 23 unit test files, 145 tests |
+| 2026-11-27 | `npx vitest run --config vitest.integration.config.js tests/integration/qualification.test.js` | Pass | 3 qualification endpoint tests |
+| 2026-11-27 | `npm run test:integration` (M3.7, first run) | Fail | Short-future fixture became expired; registration cascades left three test users and one admin profile to clean up |
+| 2026-11-27 | `npm run test:integration` (M3.7, second run) | Fail | Leftover admin profile from the first failed run blocked super-admin bootstrap; local artifacts cleaned again |
+| 2026-11-27 | `npm run test:integration` (M3.7, third run) | Pass | 68 tests passed, 1 skipped in 521.26s with a 600s timeout; local super admin parked and restored |
+| 2026-11-27 | `npm run lint` (M3.7, rerun) | Pass | 0 errors, 0 warnings |
+| 2026-11-27 | `npm test` (M3.7, concurrent rerun) | Fail | Bcrypt tests timed out under CPU contention with the concurrent build |
+| 2026-11-27 | `npm run test:e2e -- --list` (M3.7) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-27 | `npm run build` (M3.7) | Pass | New qualification policy module compiles; all routes remain dynamic where expected |
+| 2026-11-27 | `npm test` (M3.7, standalone rerun) | Pass | 23 unit test files, 145 tests |
+| 2026-11-27 | M3.7 file/endpoint recheck: `npm run lint` | Pass | 0 errors, 0 warnings |
+| 2026-11-27 | M3.7 file/endpoint recheck: `npm test` | Pass | 23 unit test files, 145 tests |
+| 2026-11-27 | M3.7 file/endpoint recheck: focused M3 integration set | Fail | `provider-settings.test.js` `beforeAll` timed out after 60s; 14 other tests passed |
+| 2026-11-27 | M3.7 file/endpoint recheck: `npx vitest run --config vitest.integration.config.js tests/integration/provider-settings.test.js` | Pass | 5 provider settings endpoint tests; no leftover rows |
+| 2026-11-27 | M3.7 file/endpoint recheck: `npm run build` | Pass | All M3.7-related routes compile |
+| 2026-11-27 | M3.7 file/endpoint recheck: `npm run test:e2e -- --list` | Pass | 1 Playwright health smoke test discovered |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-27 — M3.7 — File and endpoint recheck
+
+- Checked: re-read `docs/04-implementation-plan.md` M3/M3.7, `docs/03-api-specification.md`, ADR-115, and the generated mirror. Inspected all working-tree files directly: `src/modules/providers/qualification.service.js`, `src/modules/providers/provider-settings.service.js`, `src/modules/providers/verification.service.js`, the availability/weekly/verifications routes, `src/lib/api/handler.js`, both new tests, and the two fixture updates. Confirmed `QUALIFICATION_EXPIRED` maps to 403, expired records surface as `status: "expired"` plus `isExpired: true`, disabling availability stays allowed, and document keys/reviewer IDs are omitted from own-facing records. No source or test changes were made in this recheck.
+- Tests: lint pass; unit pass (23 files / 145 tests); build pass; Playwright discovery pass. Focused M3 integration set passed 14 tests but `provider-settings.test.js` hit a 60s `beforeAll` DB timeout in the combined run; the file passed alone (5/5) with no leftover rows. The prior final full integration pass (68 passed, 1 skipped) remains valid because no source or test files changed after it.
+- Blockers: none. Task acceptance for unapproved providers remains an M5 concern because no task or offer endpoints exist yet; ADR-115 records M3 gating as availability writes only.
+- Next step: M3.8 — Role dashboard data and forms.
+
+### 2026-11-27 — M3.7 — Qualification expiry enforcement and M3 tests
+
+- Changed: created `feat/m3.7-qualification-expiry-and-tests` from `origin/main` after M3.6 was merged via PR #33 (`7f7789d`). Added `src/modules/providers/qualification.service.js` with `verificationIsExpired`, `effectiveVerificationStatus`, `assertNoExpiredQualifications`, and `QUALIFICATION_EXPIRED` (403). Availability enable and weekly-slot replacement now reject expired verifications; disabling remains allowed. `toOwnVerification` reports effective `status` and `isExpired`. Added ADR-115 and an API expiry note, mirrored into `docs/ai_service_marketplace_complete_documentation.md`. Added `tests/unit/qualification.test.js` and `tests/integration/qualification.test.js`; lengthened short-future `expiresAt` fixtures in `tests/unit/verification.test.js` and `tests/integration/verification.test.js`.
+- Tests: lint pass; unit pass (23 files / 145 tests); focused integration pass (3 tests); full integration pass (68 passed, 1 skipped in 521.26s with a 600s timeout); build pass; Playwright discovery pass. Two earlier full runs failed because a short-future verification fixture became expired and a leftover regular admin profile from the first failed run blocked bootstrap; both were corrected. A concurrent unit rerun timed out on bcrypt under build contention and passed standalone.
+- Blockers: none. ADR-115 limits M3 gating to availability writes; M5 hard filters remain responsible for task-specific eligibility. The local super admin was parked and restored field-for-field. No commit or push has been made.
+- Next step: M3.8 — Role dashboard data and forms.
 
 ### 2026-11-27 — M3.6 — Service areas and availability endpoints
 
@@ -300,6 +332,7 @@ Newest entries at the top. Do not delete history; append corrections instead.
 - Tests: lint pass; unit pass after fixing test-only fake DB mutation stubs (22 files / 140 tests); focused integration pass (5 tests); full integration pass (65 passed, 1 skipped in 463.7s with a 600s timeout); build pass with four new dynamic routes; Playwright discovery pass.
 - Blockers: none. The full integration run required parking the local super admin again; its profile, MFA credential, and two audit links were snapshotted, restored, and verified field-for-field. The API spec still has no service-area endpoint payload schemas and OpenAPI remains an outstanding item; no ADR change. Committed on `feat/m3.6-service-areas-availability` and pushed to `origin`; no PR or merge was made.
 - Next step: M3.7 — Qualification expiry enforcement and M3 tests (documents private, unapproved blocked).
+- Correction: PR #33 was opened and merged into `origin/main` as `7f7789d` after the M3.6 log was written.
 
 ### 2026-11-26 — M3.5 — Admin application review
 

@@ -11,6 +11,10 @@ import {
   findProviderProfileByUserId,
 } from "@/modules/providers/provider-applications.service.js";
 import {
+  effectiveVerificationStatus,
+  verificationIsExpired,
+} from "@/modules/providers/qualification.service.js";
+import {
   AUDIT_ACTIONS,
   recordAdminAction,
 } from "@/modules/audit/audit.service.js";
@@ -56,11 +60,14 @@ export function toAdminRequirement(requirement) {
   };
 }
 
-export function toOwnVerification(verification, requirement) {
+export function toOwnVerification(verification, requirement, options = {}) {
+  const { now = new Date() } = options;
+
   return {
     id: verification.id,
     requirementId: verification.requirementId,
-    status: verification.status,
+    status: effectiveVerificationStatus(verification, now),
+    isExpired: verificationIsExpired(verification, now),
     verifiedAt: verification.verifiedAt,
     expiresAt: verification.expiresAt,
     rejectionReason: verification.rejectionReason,
