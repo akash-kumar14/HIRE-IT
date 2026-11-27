@@ -3,11 +3,13 @@ import { getDb } from "@/lib/db/client.js";
 import {
   providerServiceAreas,
   providerProfiles,
+  providerVerifications,
 } from "@/lib/db/schema/providers.js";
 import {
   ProviderProfileNotFoundError,
   findProviderProfileByUserId,
 } from "@/modules/providers/provider-applications.service.js";
+import { assertNoExpiredQualifications } from "@/modules/providers/qualification.service.js";
 import { providerAvailability } from "@/lib/db/schema/bookings.js";
 
 export class ServiceAreaNotFoundError extends Error {
@@ -156,12 +158,22 @@ export async function getOwnAvailability(user, options = {}) {
   return toOwnAvailability(profile, slots);
 }
 
+async function assertQualificationsCurrent(profile, database, now) {
+  const verifications = await database
+    .select()
+    .from(providerVerifications)
+    .where(eq(providerVerifications.providerProfileId, profile.id));
+
+  assertNoExpiredQualifications(verifications, now);
+}
+
 export async function setOwnAvailability(user, input, options = {}) {
-  const { database = getDb() } = options;
+  const { database = getDb(), now = new Date() } = options;
   const profile = await requireOwnProfile(user, database);
 
   if (input.isAvailable) {
     requireApproved(profile);
+    await assertQualificationsCurrent(profile, database, now);
   }
 
   const [updated] = await database
@@ -178,6 +190,7 @@ export async function replaceWeeklyAvailability(user, input, options = {}) {
   const profile = await requireOwnProfile(user, database);
 
   requireApproved(profile);
+  await assertQualificationsCurrent(profile, database, now);
 
   const slots = await database.transaction(async (tx) => {
     await tx

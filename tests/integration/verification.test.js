@@ -336,7 +336,7 @@ describe.skipIf(!databaseUrl)("verification endpoints", () => {
         documentObjectKey: "private/identity-document.pdf",
         reviewedByAdminProfileId: admin.adminProfileId,
         verifiedAt,
-        expiresAt: new Date(verifiedAt.getTime() + 1000),
+        expiresAt: new Date(verifiedAt.getTime() + 86_400_000),
       })
       .returning();
 
@@ -353,6 +353,7 @@ describe.skipIf(!databaseUrl)("verification endpoints", () => {
       id: record.id,
       requirementId: requirement.id,
       status: "approved",
+      isExpired: false,
       requirement: {
         id: requirement.id,
         name: requirement.name,

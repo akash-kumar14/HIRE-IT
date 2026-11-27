@@ -68,7 +68,7 @@ function verificationRow(overrides = {}) {
     reviewedByAdminProfileId: ADMIN_PROFILE_ID,
     reviewedAt: now,
     verifiedAt: now,
-    expiresAt: new Date(now.getTime() + 1000),
+    expiresAt: new Date(now.getTime() + 86_400_000),
     rejectionReason: null,
     createdAt: now,
     updatedAt: now,

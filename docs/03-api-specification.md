@@ -96,6 +96,8 @@ Admin provider endpoints:
 
 Record actor, timestamp, decision, reason, and applicable requirements for verification decisions.
 
+Verification expiry uses UTC: `expiresAt <= now` or status `expired` yields effective status `expired` and `isExpired: true`; expired or revoked records do not satisfy a requirement. Enabling availability or replacing weekly slots requires an approved provider profile and no expired verification on that profile; task-specific eligibility remains an M5 hard filter.
+
 ## 5. Categories and requirements
 
 - `GET /categories`
