@@ -30,12 +30,13 @@ afterAll(() => {
 });
 
 describe("getShellNavigation", () => {
-  it("exposes one current destination per area", () => {
+  it("exposes current destinations per area", () => {
     expect(getShellNavigation("customer")).toEqual([
       { href: "/dashboard", label: "Dashboard" },
     ]);
     expect(getShellNavigation("provider")).toEqual([
       { href: "/provider/dashboard", label: "Dashboard" },
+      { href: "/provider/apply", label: "Application" },
     ]);
     expect(getShellNavigation("admin")).toEqual([
       { href: "/admin", label: "Overview" },

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SummaryCard } from "@/components/dashboard/summary-card.js";
 import { getProviderDashboardData } from "@/lib/ui/dashboard-data.js";
 import { requireProviderSession } from "@/lib/ui/session-guard.js";
@@ -30,16 +31,22 @@ export default async function ProviderDashboardPage() {
           </p>
         </header>
         <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard label="Application" value="Not started" note="Use the provider form" />
+          <SummaryCard label="Application" value="Not started" note="Ready to submit" />
           <SummaryCard label="Verification" value="Pending" note="Starts after application" />
           <SummaryCard label="Tasks" value="Soon" note="Matching arrives in M5" />
         </div>
         <section className="rounded-lg border border-border bg-surface p-6 shadow-sm">
           <h2 className="text-xl font-semibold">Get started</h2>
           <p className="mt-3 text-sm text-ink-muted">
-            The provider application form is added in M3.8b. It will submit through the existing
-            provider application endpoint.
+            Apply as a provider with the name customers will see. Admins review every
+            application before approval.
           </p>
+          <Link
+            href="/provider/apply"
+            className="mt-5 inline-flex rounded-md bg-brand px-4 py-2 text-sm font-semibold text-surface"
+          >
+            Apply as a provider
+          </Link>
         </section>
       </section>
     );
@@ -74,6 +81,12 @@ export default async function ProviderDashboardPage() {
           note="Expired records restrict availability"
         />
       </div>
+
+      {data.profile.status === "rejected" ? (
+        <Link href="/provider/apply" className="text-sm font-medium text-brand">
+          Resubmit application
+        </Link>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-lg border border-border bg-surface p-6 shadow-sm">

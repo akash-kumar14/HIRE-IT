@@ -3,8 +3,8 @@
 Living status board for the AI-powered service marketplace. Every agent or developer updates this file at the end of each task. Read `AGENTS.md` before working.
 
 **Last updated:** 2026-11-27
-**Current focus:** M3.8b — Provider application form
-**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.7 done; M3.8a done; M3.8b and M3.8c remain.
+**Current focus:** M3.8c — Admin category, skill, and verification forms
+**Overall status:** Documentation baseline complete; M1 and M2 done; M3.1–M3.7 done; M3.8a and M3.8b done; M3.8c remains.
 
 ## Milestones
 
@@ -12,7 +12,7 @@ Living status board for the AI-powered service marketplace. Every agent or devel
 |---|---|---|---|
 | M1 | Foundation | Done | M1.1–M1.11 done; CI and test harness in place |
 | M2 | Authentication and authorization | Done | M2.1–M2.13 done; admin MFA enforced in UI |
-| M3 | Provider applications and verification | In progress | M3.1–M3.7 and M3.8a done; M3.8b–M3.8c remain |
+| M3 | Provider applications and verification | In progress | M3.1–M3.7 and M3.8a–M3.8b done; M3.8c remains |
 | M4 | AI-assisted task creation | Not started | Phases M4.1–M4.7 |
 | M5 | Matching and offers | Not started | Phases M5.1–M5.8 |
 | M6 | Scheduling and communication | Not started | Phases M6.1–M6.6 |
@@ -67,7 +67,7 @@ One phase = one agent task, sized for roughly 80% of a context window. Mark `[x]
 - [x] M3.7 Qualification expiry enforcement and M3 tests
 - [ ] M3.8 Role dashboard data and forms (split into M3.8a / M3.8b / M3.8c)
   - [x] M3.8a Role dashboard data surfaces
-  - [ ] M3.8b Provider application form
+  - [x] M3.8b Provider application form
   - [ ] M3.8c Admin category, skill, and requirement forms
 
 ### M4 — AI-assisted task creation
@@ -314,10 +314,55 @@ Test harness is available from M1.11; record runs here:
 | 2026-11-27 | `npm test` (M3.8a) | Pass | 24 unit test files, 150 tests |
 | 2026-11-27 | `npm run build` (M3.8a) | Pass | Customer, provider, and admin dashboards compile with dynamic session data |
 | 2026-11-27 | `npm run test:e2e -- --list` (M3.8a) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-27 | `npm run lint` (M3.8b) | Pass | 0 errors, 0 warnings |
+| 2026-11-27 | `npm test` (M3.8b initial) | Fail | 1 expected navigation assertion still assumed one provider link |
+| 2026-11-27 | `npm test` (M3.8b) | Pass | 25 unit test files, 154 tests |
+| 2026-11-27 | `npm run build` (M3.8b) | Pass | `/provider/apply` compiles as a dynamic route |
+| 2026-11-27 | `npm run test:e2e -- --list` (M3.8b) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-27 | `npm run lint` (customer provider CTA) | Pass | 0 errors, 0 warnings |
+| 2026-11-27 | `npm test` (customer provider CTA initial) | Fail | Vitest could not parse JSX in the new `.js` component |
+| 2026-11-27 | `npm test` (customer provider CTA) | Pass | 26 unit test files, 155 tests |
+| 2026-11-27 | `npm run build` (customer provider CTA) | Pass | Customer dashboard compiles with provider onboarding card |
+| 2026-11-27 | `npm run test:e2e -- --list` (customer provider CTA) | Pass | 1 Playwright health smoke test discovered; browsers still not installed locally |
+| 2026-11-27 | Focused unit tests for login 503 fix | Pass | 2 files / 6 tests; DB client and sanitized 503 envelope covered |
+| 2026-11-27 | `npm run lint`, `npm test`, `npm run build` | Pass | 0 lint errors; 27 files / 157 tests; production build succeeds |
+| 2026-11-27 | `next start` login probe on port 3100 | Pass | Login returns 503 `SERVICE_UNAVAILABLE` with a sanitized message instead of generic 500 |
+| 2026-11-27 | App DB client `select 1` after IPv4 fix | Pass | Neon connection succeeds over IPv4-forced `ws` |
+| 2026-11-27 | `npx vitest run --config vitest.integration.config.js tests/integration/auth-routes.test.js` | Pass | 5 auth route tests including valid login and suspended-user rejection |
+| 2026-11-27 | `next start` login probe after IPv4 fix | Pass | Dummy credentials return 401 `INVALID_CREDENTIALS`; no 503 or generic 500 |
+| 2026-11-27 | Local dev user verification flag update | Pass | `selected local test account` now has `email_verified_at`; no code changes |
 
 ## Work log
 
 Newest entries at the top. Do not delete history; append corrections instead.
+
+### 2026-11-27 — Local test setup — Provider email verification bypass
+
+- Changed: set `email_verified_at` for the local dev account `selected local test account` so the provider application UI and API verification gate can be exercised while the email sender is still a stub. No source, schema, migration, spec, or ADR changes.
+- Tests: post-update read confirmed `hasVerifiedAt: true`. Lint, unit, integration, and build were not rerun because no repository files changed.
+- Blockers: none. This bypass is local-only; real users still cannot receive verification emails until Resend delivery is implemented.
+- Next step: use this account to test `/provider/apply`, then approve the application through admin MFA or another local-only status update.
+
+### 2026-11-27 — Bug fix — Local login 500 and Neon WebSocket handling
+
+- Changed: `src/lib/db/client.js` now uses an IPv4-forced `ws` constructor for Neon, removing Node 24's opaque global-WebSocket TypeError and the unreachable IPv6 path that caused `ETIMEDOUT`/`ENETUNREACH`. `src/lib/api/handler.js` maps configuration and connection-level failures to a sanitized 503 `SERVICE_UNAVAILABLE` envelope before the generic 500 fallback. Added `tests/unit/db-client.test.js` and a connectivity-failure case in `tests/unit/handler.test.js`. No schema, migration, API, spec, or ADR changes.
+- Tests: focused unit run passed 2 files / 6 tests. `npm run lint`, `npm test` (27 files / 157 tests), and `npm run build` passed. Targeted `auth-routes.test.js` passed all 5 tests, including valid login after the switch to a mobile hotspot. App DB client `select 1` passed. A production `next start` login probe with dummy credentials returned the expected 401 `INVALID_CREDENTIALS` instead of 503 or generic 500.
+- Blockers: none. The earlier 503 probe correctly proved the sanitized outage envelope while IPv6 was unreachable; the IPv4-forced constructor resolves that local path without changing the DATABASE_URL.
+- Next step: continue M3.8c — Admin category, skill, and verification forms.
+
+### 2026-11-27 — M3.8b — Customer dashboard provider CTA
+
+- Changed: added `src/components/dashboard/provider-onboarding-card.jsx` with a button-styled link to `/provider/apply` and rendered it on `src/app/(customer)/dashboard/page.js` after the summary cards. Added `tests/unit/provider-onboarding-card.test.js` to assert the link target. The destination page still owns email verification, duplicate-application, and resubmission behavior. Renamed the component from `.js` to `.jsx` so Vitest can parse its JSX. No schema, migration, API, spec, or ADR changes.
+- Tests: initial unit run failed because Vitest parsed JSX in a `.js` file; rerun after rename passed with 26 files / 155 tests. Lint, build, and Playwright discovery passed.
+- Blockers: none. Browser-backed navigation remains unrun locally because Playwright browsers are not installed.
+- Next step: M3.8c — Admin category, skill, and verification forms.
+
+### 2026-11-27 — M3.8b — Provider application form
+
+- Changed: continued on `feat/m3.8-role-dashboard-data-and-forms`. Added `src/app/(provider)/provider/apply/page.js`, `src/components/provider/provider-application-form.js`, `src/lib/ui/provider-application-form.js`, and `tests/unit/provider-application-form.test.js`. The page checks email verification, blocks duplicate non-rejected applications, prefills rejected applications for resubmission, and submits through the existing `POST /api/v1/provider-applications` endpoint. Added the Application link to `src/lib/ui/navigation.js` and a dashboard CTA plus rejected-resubmission link in `src/app/(provider)/provider/dashboard/page.js`. Updated the navigation expectation in `tests/unit/ui-shell.test.js` to include the new provider link. No schema, migration, API, spec, or ADR changes.
+- Tests: initial unit run failed only because the existing navigation assertion expected one provider link; expectation updated. Rerun passed with 25 files / 154 tests. Lint, build, and Playwright discovery passed.
+- Blockers: none. Skill selection was intentionally omitted because M3 has no provider-owned skills endpoint; the form covers the supported application fields. Browser-backed form journeys remain unrun locally because Playwright browsers are not installed.
+- Next step: M3.8c — Admin category, skill, and verification forms.
 
 ### 2026-11-27 — M3.8a — Role dashboard data surfaces
 

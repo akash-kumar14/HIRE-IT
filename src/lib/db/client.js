@@ -4,9 +4,13 @@ import WebSocket from "ws";
 import { ConfigError, validateEnv } from "../config/env.js";
 import * as schema from "./schema/index.js";
 
-if (typeof globalThis.WebSocket === "undefined") {
-  neonConfig.webSocketConstructor = WebSocket;
+class Ipv4NeonWebSocket extends WebSocket {
+  constructor(url) {
+    super(url, undefined, { family: 4 });
+  }
 }
+
+neonConfig.webSocketConstructor = Ipv4NeonWebSocket;
 
 let pool = null;
 let db = null;
