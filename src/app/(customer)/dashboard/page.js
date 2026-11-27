@@ -1,3 +1,4 @@
+import { ProviderOnboardingCard } from "@/components/dashboard/provider-onboarding-card.jsx";
 import { SummaryCard } from "@/components/dashboard/summary-card.js";
 import { getCustomerDashboardData } from "@/lib/ui/dashboard-data.js";
 import { requireCustomerSession } from "@/lib/ui/session-guard.js";
@@ -25,6 +26,8 @@ export default async function CustomerDashboardPage() {
         <SummaryCard label="Service categories" value={categoryCount} note="Currently active" />
         <SummaryCard label="Tasks" value="Soon" note="AI-assisted drafts arrive in M4" />
       </div>
+
+      <ProviderOnboardingCard />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-lg border border-border bg-surface p-6 shadow-sm">

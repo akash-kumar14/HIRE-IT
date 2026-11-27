@@ -1,6 +1,46 @@
 import { createRequestId } from "./request-id.js";
 import { errorResponse } from "./response.js";
 
+const CONNECTION_ERROR_CODES = new Set([
+  "EAI_AGAIN",
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "EPIPE",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+]);
+
+function isServiceUnavailableError(error) {
+  const pending = [error];
+  const seen = new Set();
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+
+    if (!current || typeof current !== "object" || seen.has(current)) {
+      continue;
+    }
+
+    seen.add(current);
+
+    if (
+      current.name === "ConfigError" ||
+      CONNECTION_ERROR_CODES.has(current.code) ||
+      (current.type === "error" && "error" in current)
+    ) {
+      return true;
+    }
+
+    if (current.cause) pending.push(current.cause);
+    if (current.error) pending.push(current.error);
+    if (Array.isArray(current.errors)) pending.push(...current.errors);
+  }
+
+  return false;
+}
+
 export async function handleRequest(request, handler) {
   const requestId = createRequestId(request);
 
@@ -62,6 +102,14 @@ export async function handleRequest(request, handler) {
           headers: { "retry-after": String(error.retryAfterSeconds) },
           meta: { retryAfterSeconds: error.retryAfterSeconds },
         },
+      );
+    }
+
+    if (isServiceUnavailableError(error)) {
+      return errorResponse(
+        "SERVICE_UNAVAILABLE",
+        "Service temporarily unavailable.",
+        { status: 503, requestId },
       );
     }
 

@@ -53,6 +53,33 @@ describe("handleRequest", () => {
     });
   });
 
+  it("maps database connectivity failures to a sanitized 503 envelope", async () => {
+    const response = await handleRequest(testRequest(), async () => {
+      const timeout = Object.assign(new Error("connect ETIMEDOUT secret-host"), {
+        code: "ETIMEDOUT",
+      });
+      const aggregate = Object.assign(new Error("database password is secret"), {
+        errors: [timeout],
+      });
+      const socketEvent = { type: "error", error: aggregate };
+      const queryError = Object.assign(new Error("Failed query"), {
+        cause: socketEvent,
+      });
+
+      throw queryError;
+    });
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      success: false,
+      error: {
+        code: "SERVICE_UNAVAILABLE",
+        message: "Service temporarily unavailable.",
+      },
+      meta: { requestId: "request-123" },
+    });
+  });
+
   it("sanitizes unexpected errors", async () => {
     const response = await handleRequest(testRequest(), async () => {
       throw new Error("database password is secret");
